@@ -4,9 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "InputMappingContext.h" // 追加
-#include "InputAction.h" // 追加
-#include "InputActionValue.h" // 追加
+#include "InputMappingContext.h"	// IMC
+#include "InputAction.h"			// IA
+#include "InputActionValue.h"		// 追加
+
+#include "EPlayerState.h"			// プレイヤーの状態
 #include "MainCharacter.generated.h"
 
 
@@ -37,25 +39,33 @@ public:
 
 	// 入力関連
 private:
+	EPlayerState PlayerState;
+
+private:
 	// IAのマッピング
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
-	UInputMappingContext* m_mappingContext;
+	UInputMappingContext* MappingContext;
 
 	// 移動のIA
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
-	UInputAction* m_IA_playerMove;
+	UInputAction* IA_PlayerMove;
 
 	// プレイヤーの移動処理
-	void UpdateMovement(const FInputActionValue& _value);
+	void UpdateMovement(const FInputActionValue& InputValue);
 
 
 	// 変形のIA
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
-	UInputAction* m_IA_Transform;
+	UInputAction* IA_Transform;
 	// 変形ボタンが押されたばかり
-	void OnTransformStarted(const FInputActionValue& _value);
+	void OnTransformStarted(const FInputActionValue& InputValue);
 	// 一定時間押されたら
-	void OnTransformCompleted(const FInputActionValue& _value); 
+	void OnTransformCompleted(const FInputActionValue& InputValue);
 	// 途中で離されたら
-	void OnTransformCanceled(const FInputActionValue& _value); 
+	void OnTransformCanceled(const FInputActionValue& InputValue);
+
+
+	// 能力使用のIA
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	UInputAction* IA_UseAbility;
 };

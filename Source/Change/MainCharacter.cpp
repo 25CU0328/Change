@@ -38,9 +38,9 @@ void AMainCharacter::BeginPlay()
    
 
     // IMCが設定されたなら
-    if (m_mappingContext) {
+    if (MappingContext) {
         // SubsystemにIMCを追加する
-        subsystem->AddMappingContext(m_mappingContext, 0);
+        subsystem->AddMappingContext(MappingContext, 0);
     }
 }
 
@@ -48,31 +48,66 @@ void AMainCharacter::BeginPlay()
 void AMainCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 // Called to bind functionality to input
-void AMainCharacter::SetupPlayerInputComponent(UInputComponent* _pPlayerInputComponent)
+void AMainCharacter::SetupPlayerInputComponent(UInputComponent* _playerInputComponent)
 {
-	Super::SetupPlayerInputComponent(_pPlayerInputComponent);
+	Super::SetupPlayerInputComponent(_playerInputComponent);
 
-    if (UEnhancedInputComponent* pEnhancedInputComponent = CastChecked<UEnhancedInputComponent>(_pPlayerInputComponent)) {
+	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(_playerInputComponent)) {
+		// 移動のIAが設定された場合
+		if (IA_PlayerMove) {
+			// 移動処理と入力のバインド
+			EnhancedInputComponent->BindAction(
+				IA_PlayerMove,
+				ETriggerEvent::Triggered,
+				this,
+				&AMainCharacter::UpdateMovement
+			);
+		}
 
-        // 移動処理と入力のバインド
-        pEnhancedInputComponent->BindAction(
-            m_IA_playerMove, 
-            ETriggerEvent::Triggered,
-            this,
-            &AMainCharacter::UpdateMovement
-        );
-    }
+		// 変身のIAが設定された場合
+		if (IA_Transform)
+		{
+			// ボタンが押された瞬間 (Started)
+			EnhancedInputComponent->BindAction(
+				IA_Transform, 
+				ETriggerEvent::Started, 
+				this, 
+				&AMainCharacter::OnTransformStarted
+			);
+
+			// 長押しが完了した時 (Completed)
+			EnhancedInputComponent->BindAction(
+				IA_Transform, 
+				ETriggerEvent::Completed, 
+				this, 
+				&AMainCharacter::OnTransformCompleted
+			);
+
+			// 長押しの途中で離された時 (Canceled)
+			EnhancedInputComponent->BindAction(
+				IA_Transform, 
+				ETriggerEvent::Canceled, 
+				this, 
+				&AMainCharacter::OnTransformCanceled
+			);
+		}
+	}
 }
 
 // プレイヤーの移動処理
-void AMainCharacter::UpdateMovement(const FInputActionValue& _value)
+void AMainCharacter::UpdateMovement(const FInputActionValue& InputValue)
 {
+	// 今は変身状態の場合、処理しない
+	if (PlayerState == EPlayerState::Transform)
+		return;
+
 	// キーボードの入力を取得する
-	FVector MovementVector = _value.Get<FVector>();
+	FVector MovementVector = InputValue.Get<FVector>();
+    UE_LOG(LogTemp, Log, TEXT("UpdateMovement"));
+    PlayerState = EPlayerState::Move;
 
     if (Controller != nullptr)
     {
@@ -86,20 +121,20 @@ void AMainCharacter::UpdateMovement(const FInputActionValue& _value)
 
 
 // 変形ボタンが押されたばかり
-void AMainCharacter::OnTransformStarted(const FInputActionValue& _value)
+void AMainCharacter::OnTransformStarted(const FInputActionValue& InputValue)
 {
     UE_LOG(LogTemp, Log, TEXT("Transform Start"));
-    // 変身開始アニメションやエフェクト
+    PlayerState = EPlayerState::Transform;
 }
 // 一定時間押されたら
-void AMainCharacter::OnTransformCompleted(const FInputActionValue& _value)
+void AMainCharacter::OnTransformCompleted(const FInputActionValue& InputValue)
 {
     UE_LOG(LogTemp, Log, TEXT("Transform Complete"));
-    // 変身アニメション
+    PlayerState = EPlayerState::Idle;
 }
 // 途中で離されたら
-void AMainCharacter::OnTransformCanceled(const FInputActionValue& _value)
+void AMainCharacter::OnTransformCanceled(const FInputActionValue& InputValue)
 {
     UE_LOG(LogTemp, Log, TEXT("Transform Canceled"));
-    // 変身諦めアニメションやエフェクト
+    PlayerState = EPlayerState::Idle;
 }
