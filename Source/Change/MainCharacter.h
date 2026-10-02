@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "InputMappingContext.h"	// IMC
 #include "InputAction.h"			// IA
 #include "InputActionValue.h"		// 追加
@@ -50,22 +51,26 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	UInputAction* IA_PlayerMove;
 
-	// プレイヤーの移動処理
-	void UpdateMovement(const FInputActionValue& InputValue);
-
-
-	// 変形のIA
+	// 猪に変形のするIA
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
-	UInputAction* IA_Transform;
-	// 変形ボタンが押されたばかり
-	void OnTransformStarted(const FInputActionValue& InputValue);
-	// 一定時間押されたら
-	void OnTransformCompleted(const FInputActionValue& InputValue);
-	// 途中で離されたら
-	void OnTransformCanceled(const FInputActionValue& InputValue);
+	UInputAction* IA_Transform_Boar;
+
+	// 兎に変形のするIA
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	UInputAction* IA_Transform_Rabbit;
 
 
 	// 能力使用のIA
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	UInputAction* IA_UseAbility;
+
+private:
+	// プレイヤーの移動処理
+	void OnMoveButtonPressed(const FInputActionValue& InputValue);
+	// 猪に変身するボタンが押されたら呼び出される関数
+	void OnTransformBoarPressed();
+	// 兎に変身するボタンが押されたら呼び出される関数
+	void OnTransformRabbitPressed();
+	// 能力使用ボタンが押されたら呼び出される関数
+	void OnUseAbilityPressed();
 };
