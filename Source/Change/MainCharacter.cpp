@@ -36,19 +36,29 @@ void AMainCharacter::BeginPlay()
     if (!subsystem)
         return;
 
-	PlayerState = EPlayerState::Idle;
 
     // IMCが設定されたなら
     if (MappingContext) {
         // SubsystemにIMCを追加する
         subsystem->AddMappingContext(MappingContext, 0);
     }
+
+	// 移動処理を行うためのコンポーネントを取得
+	MovementComponent = GetCharacterMovement();
+
+	// プレイヤーの状態をアイドル状態に初期化
+	PlayerState = EPlayerState::Idle;
+
+	// プレイヤーの向きを右に初期化
+	PlayerDirection = EPlayerDirection::Right;
 }
 
 // Called every frame
 void AMainCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	UpdatePlayerDirection();
 }
 
 // Called to bind functionality to input
@@ -113,7 +123,7 @@ void AMainCharacter::OnMoveButtonPressed(const FInputActionValue& InputValue)
 	if (PlayerState == EPlayerState::Transform)
 		return;
 
-	// キーボードの入力を取得する
+	// キーボードの入力から移動ベクトルを取得
 	FVector2f MovementVector = FVector2f(
 		InputValue.Get<FVector>().X,
 		InputValue.Get<FVector>().Z
@@ -122,7 +132,6 @@ void AMainCharacter::OnMoveButtonPressed(const FInputActionValue& InputValue)
 	
 	if (MovementVector.X != 0.0f)
 	{
-		auto* MovementComponent = GetCharacterMovement();
 		if (MovementComponent->Velocity.Z != 0.0f)
 		{
 			// 移動を停止）
@@ -131,11 +140,9 @@ void AMainCharacter::OnMoveButtonPressed(const FInputActionValue& InputValue)
 
 		// キャラクターの右方向に移動する
 		AddMovementInput(FVector(1, 0, 0), MovementVector.X);
-		
 	}
 	else if (MovementVector.Y != 0.0f)
 	{
-		auto* MovementComponent = GetCharacterMovement();
 		if (MovementComponent->Velocity.X != 0.0f)
 		{
 			// 移動を停止）
@@ -163,4 +170,47 @@ void AMainCharacter::OnTransformRabbitPressed()
 void AMainCharacter::OnUseAbilityPressed()
 {
 
+}
+
+// プレイヤーの向きを更新する
+void AMainCharacter::UpdatePlayerDirection()
+{
+	// 変身中やアイドル状態の場合は向きを更新しない
+	if(PlayerState == EPlayerState::Transform || PlayerState == EPlayerState::Idle)
+		return;
+
+	if(MovementComponent->Velocity.X >= 0.0f)
+	{
+		PlayerDirection = EPlayerDirection::Right;
+	}
+	else if(MovementComponent->Velocity.X < 0.0f)
+	{
+		PlayerDirection = EPlayerDirection::Left;
+	}
+	else if(MovementComponent->Velocity.Z > 0.0f)
+	{
+		PlayerDirection = EPlayerDirection::Up;
+	}
+	else if(MovementComponent->Velocity.Z <= 0.0f)
+	{
+		PlayerDirection = EPlayerDirection::Down;
+	}
+}
+
+// プレイヤー状態を更新する
+void AMainCharacter::UpdatePlayerState()
+{
+	// 変身中の場合は状態を更新しない
+	if (PlayerState == EPlayerState::Transform)
+		return;
+
+	// 移動中かどうかで状態を更新する
+	if (MovementComponent->Velocity.Size() > 0.0f)
+	{
+		PlayerState = EPlayerState::Move;
+	}
+	else
+	{
+		PlayerState = EPlayerState::Idle;
+	}
 }

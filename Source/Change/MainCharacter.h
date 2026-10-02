@@ -7,11 +7,11 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "InputMappingContext.h"	// IMC
 #include "InputAction.h"			// IA
-#include "InputActionValue.h"		// 追加
+#include "InputActionValue.h"
 
 #include "EPlayerState.h"			// プレイヤーの状態
+#include "EPlayerDirection.h"		// プレイヤーの向き
 #include "MainCharacter.generated.h"
-
 
 
 // 入力関連クラスの前方宣言
@@ -40,7 +40,14 @@ public:
 
 	// 入力関連
 private:
+	// プレイヤーの状態
 	EPlayerState PlayerState;
+
+	// プレイヤーの向き
+	EPlayerDirection PlayerDirection;
+
+	// 移動処理を行うためのコンポーネント
+	UCharacterMovementComponent* MovementComponent;
 
 private:
 	// IAのマッピング
@@ -73,4 +80,10 @@ private:
 	void OnTransformRabbitPressed();
 	// 能力使用ボタンが押されたら呼び出される関数
 	void OnUseAbilityPressed();
+
+	// プレイヤーの向きを更新する
+	void UpdatePlayerDirection();
+
+	// プレイヤー状態を更新する
+	void UpdatePlayerState(EPlayerState NewState);
 };
