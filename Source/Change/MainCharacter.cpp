@@ -7,6 +7,7 @@
 #include "Components/InputComponent.h" // 追加
 #include "EnhancedInputComponent.h" // 追加
 #include "EnhancedInputSubsystems.h" // 追加
+#include "GameFramework/CharacterMovementComponent.h" // 追加：UCharacterMovementComponent を使うためのヘッダー
 
 // Sets default values
 AMainCharacter::AMainCharacter()
@@ -35,19 +36,29 @@ void AMainCharacter::BeginPlay()
     if (!subsystem)
         return;
 
-   
 
     // IMCが設定されたなら
     if (MappingContext) {
         // SubsystemにIMCを追加する
         subsystem->AddMappingContext(MappingContext, 0);
     }
+
+	// 移動処理を行うためのコンポーネントを取得
+	MovementComponent = GetCharacterMovement();
+
+	// プレイヤーの状態をアイドル状態に初期化
+	PlayerState = EPlayerState::Idle;
+
+	// プレイヤーの向きを右に初期化
+	PlayerDirection = EPlayerDirection::Right;
 }
 
 // Called every frame
 void AMainCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	UpdatePlayerDirection();
 }
 
 // Called to bind functionality to input
@@ -63,78 +74,143 @@ void AMainCharacter::SetupPlayerInputComponent(UInputComponent* _playerInputComp
 				IA_PlayerMove,
 				ETriggerEvent::Triggered,
 				this,
-				&AMainCharacter::UpdateMovement
+				&AMainCharacter::OnMoveButtonPressed
 			);
 		}
 
 		// 変身のIAが設定された場合
-		if (IA_Transform)
+		if (IA_Transform_Boar)
 		{
 			// ボタンが押された瞬間 (Started)
 			EnhancedInputComponent->BindAction(
-				IA_Transform, 
+				IA_Transform_Boar,
 				ETriggerEvent::Started, 
 				this, 
-				&AMainCharacter::OnTransformStarted
+				&AMainCharacter::OnTransformBoarPressed
 			);
+		}
 
-			// 長押しが完了した時 (Completed)
+		// 兎に変身のIAが設定された場合
+		if (IA_Transform_Rabbit)
+		{
+			// ボタンが押された瞬間 (Started)
 			EnhancedInputComponent->BindAction(
-				IA_Transform, 
-				ETriggerEvent::Completed, 
-				this, 
-				&AMainCharacter::OnTransformCompleted
+				IA_Transform_Rabbit,
+				ETriggerEvent::Started,
+				this,
+				&AMainCharacter::OnTransformRabbitPressed
 			);
+		}
 
-			// 長押しの途中で離された時 (Canceled)
+		// 能力使用のIAが設定された場合
+		if (IA_UseAbility)
+		{
+			// ボタンが押された瞬間 (Started)
 			EnhancedInputComponent->BindAction(
-				IA_Transform, 
-				ETriggerEvent::Canceled, 
-				this, 
-				&AMainCharacter::OnTransformCanceled
+				IA_UseAbility,
+				ETriggerEvent::Started,
+				this,
+				&AMainCharacter::OnUseAbilityPressed
 			);
 		}
 	}
 }
 
 // プレイヤーの移動処理
-void AMainCharacter::UpdateMovement(const FInputActionValue& InputValue)
+void AMainCharacter::OnMoveButtonPressed(const FInputActionValue& InputValue)
 {
 	// 今は変身状態の場合、処理しない
 	if (PlayerState == EPlayerState::Transform)
 		return;
 
-	// キーボードの入力を取得する
-	FVector MovementVector = InputValue.Get<FVector>();
-    UE_LOG(LogTemp, Log, TEXT("UpdateMovement"));
-    PlayerState = EPlayerState::Move;
+	// キーボードの入力から移動ベクトルを取得
+	FVector2f MovementVector = FVector2f(
+		InputValue.Get<FVector>().X,
+		InputValue.Get<FVector>().Z
+	);
 
-    if (Controller != nullptr)
-    {
-        // X 軸移動
-        AddMovementInput(FVector(1.0f, 0.0f, 0.0f), MovementVector.X);
+	
+	if (MovementVector.X != 0.0f)
+	{
+		if (MovementComponent->Velocity.Z != 0.0f)
+		{
+			// 移動を停止）
+			MovementComponent->StopMovementImmediately();
+		}
 
-        // Z 軸移動
-        AddMovementInput(FVector(0.0f, 0.0f, 1.0f), MovementVector.Z);
-    }
+		// キャラクターの右方向に移動する
+		AddMovementInput(FVector(1, 0, 0), MovementVector.X);
+	}
+	else if (MovementVector.Y != 0.0f)
+	{
+		if (MovementComponent->Velocity.X != 0.0f)
+		{
+			// 移動を停止）
+			MovementComponent->StopMovementImmediately();
+		}
+
+		// キャラクターの前方向に移動する
+		AddMovementInput(FVector(0, 0, 1), MovementVector.Y);
+	}
 }
 
+// 猪に変身するボタンが押されたら呼び出される関数
+void AMainCharacter::OnTransformBoarPressed()
+{
 
-// 変形ボタンが押されたばかり
-void AMainCharacter::OnTransformStarted(const FInputActionValue& InputValue)
-{
-    UE_LOG(LogTemp, Log, TEXT("Transform Start"));
-    PlayerState = EPlayerState::Transform;
 }
-// 一定時間押されたら
-void AMainCharacter::OnTransformCompleted(const FInputActionValue& InputValue)
+
+// 兎に変身するボタンが押されたら呼び出される関数
+void AMainCharacter::OnTransformRabbitPressed()
 {
-    UE_LOG(LogTemp, Log, TEXT("Transform Complete"));
-    PlayerState = EPlayerState::Idle;
+
 }
-// 途中で離されたら
-void AMainCharacter::OnTransformCanceled(const FInputActionValue& InputValue)
+
+// 能力使用ボタンが押されたら呼び出される関数
+void AMainCharacter::OnUseAbilityPressed()
 {
-    UE_LOG(LogTemp, Log, TEXT("Transform Canceled"));
-    PlayerState = EPlayerState::Idle;
+
+}
+
+// プレイヤーの向きを更新する
+void AMainCharacter::UpdatePlayerDirection()
+{
+	// 変身中やアイドル状態の場合は向きを更新しない
+	if(PlayerState == EPlayerState::Transform || PlayerState == EPlayerState::Idle)
+		return;
+
+	if(MovementComponent->Velocity.X >= 0.0f)
+	{
+		PlayerDirection = EPlayerDirection::Right;
+	}
+	else if(MovementComponent->Velocity.X < 0.0f)
+	{
+		PlayerDirection = EPlayerDirection::Left;
+	}
+	else if(MovementComponent->Velocity.Z > 0.0f)
+	{
+		PlayerDirection = EPlayerDirection::Up;
+	}
+	else if(MovementComponent->Velocity.Z <= 0.0f)
+	{
+		PlayerDirection = EPlayerDirection::Down;
+	}
+}
+
+// プレイヤー状態を更新する
+void AMainCharacter::UpdatePlayerState()
+{
+	// 変身中の場合は状態を更新しない
+	if (PlayerState == EPlayerState::Transform)
+		return;
+
+	// 移動中かどうかで状態を更新する
+	if (MovementComponent->Velocity.Size() > 0.0f)
+	{
+		PlayerState = EPlayerState::Move;
+	}
+	else
+	{
+		PlayerState = EPlayerState::Idle;
+	}
 }

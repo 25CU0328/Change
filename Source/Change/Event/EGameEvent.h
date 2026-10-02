@@ -5,13 +5,8 @@ enum class EGameEvent
 {
 	None = -1,
 	
-	// 変身
-	TransformStart,
-	TransformComplete,
-	TransformCanceled,
+	
+	Transform, // 変身
 
-	// 入力
-	MoveInput,
-	TransformInput,
-	UseAbilityInput,
+	UseAbility, // 能力使用
 };
