@@ -24,21 +24,24 @@ class CHANGE_API AMainCharacter : public ACharacter
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
+	// コンストラクタ
 	AMainCharacter();
+	// デストラクター
+	~AMainCharacter();
 
 protected:
-	// Called when the game starts or when spawned
+	// ゲーム開始時の処理
 	virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
+	// 毎フレーム呼ばれる処理
 	virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
+	// 入力コンポネントとメソッドのバインド
 	virtual void SetupPlayerInputComponent(class UInputComponent* _playerInputComponent) override;
 
-	// 入力関連
+	// プレイヤーの移動処理
+	void UpdateMovement(const FVector2f& MovementVector);
 private:
 	// プレイヤーの状態
 	EPlayerState PlayerState;
@@ -50,40 +53,8 @@ private:
 	UCharacterMovementComponent* MovementComponent;
 
 private:
-	// IAのマッピング
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
-	UInputMappingContext* MappingContext;
-
-	// 移動のIA
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
-	UInputAction* IA_PlayerMove;
-
-	// 猪に変形のするIA
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
-	UInputAction* IA_Transform_Boar;
-
-	// 兎に変形のするIA
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
-	UInputAction* IA_Transform_Rabbit;
-
-
-	// 能力使用のIA
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
-	UInputAction* IA_UseAbility;
-
-private:
-	// プレイヤーの移動処理
-	void OnMoveButtonPressed(const FInputActionValue& InputValue);
-	// 猪に変身するボタンが押されたら呼び出される関数
-	void OnTransformBoarPressed();
-	// 兎に変身するボタンが押されたら呼び出される関数
-	void OnTransformRabbitPressed();
-	// 能力使用ボタンが押されたら呼び出される関数
-	void OnUseAbilityPressed();
-
 	// プレイヤーの向きを更新する
 	void UpdatePlayerDirection();
-
 	// プレイヤー状態を更新する
-	void UpdatePlayerState(EPlayerState NewState);
+	void UpdatePlayerState();
 };
