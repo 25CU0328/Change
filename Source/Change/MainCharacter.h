@@ -52,6 +52,8 @@ public:
 	// 変身状態を解除するときの処理
 	void UpdateTransformCancel();
 
+	// プレイヤーの向きを更新する
+	void UpdateDirection(const FVector2f& MovementVector);
 protected:
 	// スプライトコンポーネント
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Sprite")
@@ -63,6 +65,7 @@ private:
 	EPlayerState PlayerState;
 
 	// プレイヤーの向き
+	UPROPERTY(BlueprintReadOnly, meta=(AllowPrivateAccess = "true"))
 	EPlayerDirection PlayerDirection;
 
 	// 変身時の状態
@@ -73,8 +76,7 @@ private:
 
 
 private:
-	// プレイヤーの向きを更新する
-	void UpdatePlayerDirection();
+	
 	// プレイヤー状態を更新する
 	void UpdatePlayerState();
 
