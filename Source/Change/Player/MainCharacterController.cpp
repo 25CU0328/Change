@@ -73,6 +73,18 @@ void AMainCharacterController::SetupInputComponent()
 		);
 	}
 
+	// 変身の解除のIAが設定された場合
+	if (IA_TransformCancel)
+	{
+		// ボタンが押された瞬間 (Started)
+		EnhancedInputComponent->BindAction(
+			IA_TransformCancel,
+			ETriggerEvent::Started,
+			this,
+			&AMainCharacterController::OnIA_TransformCancel
+		);
+	}
+
 	// 能力使用のIAが設定された場合
 	if (IA_UseAbility)
 	{
@@ -103,13 +115,19 @@ void AMainCharacterController::OnIA_PlayerMove(const FInputActionValue& InputVal
 // 猪に変身するボタンが押されたら呼び出される関数
 void AMainCharacterController::OnIA_TransformBoar()
 {
-
+	MainCharacter->UpdateTransformBoar();
 }
 
 // 兎に変身するボタンが押されたら呼び出される関数
 void AMainCharacterController::OnIA_TransformRabbit()
 {
 
+}
+
+// 変身を解除するボタンが押されたら呼び出される関数
+void AMainCharacterController::OnIA_TransformCancel()
+{
+	MainCharacter->UpdateTransformCancel();
 }
 
 // 能力使用ボタンが押されたら呼び出される関数
