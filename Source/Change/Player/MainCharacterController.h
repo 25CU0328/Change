@@ -47,6 +47,9 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	UInputAction* IA_TransformRabbit;
 
+	// 変身を解除のするIA
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	UInputAction* IA_TransformCancel;
 
 	// 能力使用のIA
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
@@ -60,6 +63,8 @@ private:
 	void OnIA_TransformBoar();
 	// 兎に変身するボタンが押されたら呼び出される関数
 	void OnIA_TransformRabbit();
+	// 変身を解除するボタンが押されたら呼び出される関数
+	void OnIA_TransformCancel();
 	// 能力使用ボタンが押されたら呼び出される関数
 	void OnIA_UseAbility();
 

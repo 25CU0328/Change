@@ -4,7 +4,6 @@
 #include "MainCharacter.h"
 #include "Kismet/KismetSystemLibrary.h" 
 #include "Kismet/GameplayStatics.h" 
-		
 #include "Player/MainCharacterController.h"		// プレイヤーコントローラーのクラスを使うため
 #include "GameFramework/CharacterMovementComponent.h" // UCharacterMovementComponent を使うためのヘッダー
 
@@ -13,6 +12,10 @@ AMainCharacter::AMainCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	// コンポーネントの生成
+	//MySpriteComponent = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("MySpriteComponent"));
+	//RootComponent = MySpriteComponent;
 
 }
 
@@ -43,6 +46,9 @@ void AMainCharacter::BeginPlay()
 
 	// プレイヤーの向きを右に初期化
 	PlayerDirection = EPlayerDirection::Right;
+
+	//　変身の状態を人間に初期化
+	TransformState = ETransformState::Human;
 }
 
 // Called every frame
@@ -134,4 +140,19 @@ void AMainCharacter::UpdatePlayerState()
 	{
 		PlayerState = EPlayerState::Idle;
 	}
+}
+
+// 猪に変身したときの処理
+void AMainCharacter::UpdateTransformBoar()
+{
+	TransformState = ETransformState::Boar;
+
+
+}
+
+// 変身状態を解除するときの処理
+void AMainCharacter::UpdateTransformCancel()
+{
+	TransformState = ETransformState::Human;
+
 }
