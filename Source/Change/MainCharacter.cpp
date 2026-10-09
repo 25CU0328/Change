@@ -50,7 +50,8 @@ void AMainCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	UpdatePlayerDirection();
+	// 状態の更新
+	UpdatePlayerState();
 }
 
 // Called to bind functionality to input
@@ -92,39 +93,40 @@ void AMainCharacter::UpdateMovement(const FVector2f& MovementVector)
 
 
 // プレイヤーの向きを更新する
-void AMainCharacter::UpdatePlayerDirection()
+void AMainCharacter::UpdateDirection(const FVector2f& MovementVector)
 {
-	// 変身中やアイドル状態の場合は向きを更新しない
-	if(PlayerState == EPlayerState::Transform || PlayerState == EPlayerState::Idle)
-		return;
-
-	if(MovementComponent->Velocity.X >= 0.0f)
+	// 水平方向の入力を優先する
+	if (FMath::Abs(MovementVector.X) != 0.0f)
 	{
-		PlayerDirection = EPlayerDirection::Right;
+		if (MovementVector.X >= 0.0f)
+		{
+			PlayerDirection = EPlayerDirection::Right;
+		}
+		else if (MovementVector.X < 0.0f)
+		{
+			PlayerDirection = EPlayerDirection::Left;
+		}
 	}
-	else if(MovementComponent->Velocity.X < 0.0f)
+	else 
 	{
-		PlayerDirection = EPlayerDirection::Left;
-	}
-	else if(MovementComponent->Velocity.Z > 0.0f)
-	{
-		PlayerDirection = EPlayerDirection::Up;
-	}
-	else if(MovementComponent->Velocity.Z <= 0.0f)
-	{
-		PlayerDirection = EPlayerDirection::Down;
+		if (MovementVector.Y > 0.0f)
+		{
+			PlayerDirection = EPlayerDirection::Up;
+		}
+		else if (MovementVector.Y < 0.0f)
+		{
+			PlayerDirection = EPlayerDirection::Down;
+		}
 	}
 }
 
 // プレイヤー状態を更新する
 void AMainCharacter::UpdatePlayerState()
 {
-	// 変身中の場合は状態を更新しない
-	if (PlayerState == EPlayerState::Transform)
-		return;
-
 	// 移動中かどうかで状態を更新する
-	if (MovementComponent->Velocity.Size() > 0.0f)
+	if (!FMath::IsNearlyZero(MovementComponent->Velocity.X) ||
+		!FMath::IsNearlyZero(MovementComponent->Velocity.Z)
+	)
 	{
 		PlayerState = EPlayerState::Move;
 	}

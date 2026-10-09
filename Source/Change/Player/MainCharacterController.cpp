@@ -87,7 +87,6 @@ void AMainCharacterController::SetupInputComponent()
 }
 
 
-
 // プレイヤーの移動処理
 void AMainCharacterController::OnIA_PlayerMove(const FInputActionValue& InputValue)
 {
@@ -96,8 +95,11 @@ void AMainCharacterController::OnIA_PlayerMove(const FInputActionValue& InputVal
 		InputValue.Get<FVector>().X,
 		InputValue.Get<FVector>().Z
 	);
-
+	// 移動の更新処理
 	MainCharacter->UpdateMovement(MovementVector);
+
+	// 向きの更新処理
+	MainCharacter->UpdateDirection(MovementVector);
 }
 
 // 猪に変身するボタンが押されたら呼び出される関数

@@ -42,19 +42,22 @@ public:
 
 	// プレイヤーの移動処理
 	void UpdateMovement(const FVector2f& MovementVector);
+
+	// プレイヤーの向きを更新する
+	void UpdateDirection(const FVector2f& MovementVector);
 private:
 	// プレイヤーの状態
 	EPlayerState PlayerState;
 
 	// プレイヤーの向き
+	UPROPERTY(BlueprintReadOnly, meta=(AllowPrivateAccess = "true"))
 	EPlayerDirection PlayerDirection;
 
 	// 移動処理を行うためのコンポーネント
 	UCharacterMovementComponent* MovementComponent;
 
 private:
-	// プレイヤーの向きを更新する
-	void UpdatePlayerDirection();
+	
 	// プレイヤー状態を更新する
 	void UpdatePlayerState();
 };
