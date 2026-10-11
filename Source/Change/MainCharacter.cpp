@@ -5,6 +5,12 @@
 #include "Kismet/KismetSystemLibrary.h" 
 #include "Kismet/GameplayStatics.h" 
 #include "Player/MainCharacterController.h"		// プレイヤーコントローラーのクラスを使うため
+
+// PaperZDアニメションをコントロールするためインクルード
+#include "PaperZDCharacter.h"
+#include "PaperZDAnimationComponent.h"
+#include "PaperZDAnimInstance.h"
+
 #include "GameFramework/CharacterMovementComponent.h" // UCharacterMovementComponent を使うためのヘッダー
 
 // Sets default values
@@ -12,11 +18,6 @@ AMainCharacter::AMainCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
-	// コンポーネントの生成
-	//MySpriteComponent = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("MySpriteComponent"));
-	//RootComponent = MySpriteComponent;
-
 }
 
 // デストラクター
@@ -38,11 +39,14 @@ void AMainCharacter::BeginPlay()
     // 入力を有効にする
     EnableInput(playerController);
 
-	// 移動処理を行うためのコンポーネントを取得
+	// 移動処理を行うためのコンポーネントを取得する
 	MovementComponent = GetCharacterMovement();
 
+	// アニメーションコンポネントを取得する
+	AnimationComponent = FindComponentByClass<UPaperZDAnimationComponent>();
+
 	// プレイヤーの状態をアイドル状態に初期化
-	PlayerState = EPlayerState::Idle;
+	CurrentPlayerState = EPlayerState::Idle;
 
 	// プレイヤーの向きを右に初期化
 	PlayerDirection = EPlayerDirection::Right;
@@ -70,8 +74,13 @@ void AMainCharacter::SetupPlayerInputComponent(UInputComponent* _playerInputComp
 void AMainCharacter::UpdateMovement(const FVector2f& MovementVector)
 {
 	// MovementComponentが取得できない場合は処理しない
-	if(!MovementComponent)
+	if (!MovementComponent)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Cant Find MovementComponent!"));
 		return;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("MovementVector With (%f, %f)"), MovementVector.X, MovementVector.Y);
 
 	if (MovementVector.X != 0.0f)
 	{
@@ -101,6 +110,8 @@ void AMainCharacter::UpdateMovement(const FVector2f& MovementVector)
 // プレイヤーの向きを更新する
 void AMainCharacter::UpdateDirection(const FVector2f& MovementVector)
 {
+	UE_LOG(LogTemp, Warning, TEXT("UpdateDirection With (%f, %f)"), MovementVector.X, MovementVector.Y);
+
 	// 水平方向の入力を優先する
 	if (FMath::Abs(MovementVector.X) != 0.0f)
 	{
@@ -134,11 +145,11 @@ void AMainCharacter::UpdatePlayerState()
 		!FMath::IsNearlyZero(MovementComponent->Velocity.Z)
 	)
 	{
-		PlayerState = EPlayerState::Move;
+		CurrentPlayerState = EPlayerState::Moving;
 	}
 	else
 	{
-		PlayerState = EPlayerState::Idle;
+		CurrentPlayerState = EPlayerState::Idle;
 	}
 }
 
@@ -147,7 +158,17 @@ void AMainCharacter::UpdateTransformBoar()
 {
 	TransformState = ETransformState::Boar;
 
-
+	if (!AnimationComponent)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Animation Component doesn't Exit"));
+		return;
+	}
+	if (!AS_Boar)
+	{
+		UE_LOG(LogTemp, Error, TEXT("AS_Boar doesn't Exit"));
+		return;
+	}
+	AnimationComponent->SetAnimInstanceClass(AS_Boar);
 }
 
 // 変身状態を解除するときの処理

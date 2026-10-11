@@ -5,21 +5,16 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
-//#include "PaperSpriteComponent.h"
-#include "InputMappingContext.h"	// IMC
-#include "InputAction.h"			// IA
-#include "InputActionValue.h"
+
 #include "EPlayerState.h"			// プレイヤーの状態
 #include "EPlayerDirection.h"		// プレイヤーの向き
 #include "ETransformState.h"		// 変身時の状態
+
 #include "MainCharacter.generated.h"
 
-
-// 入力関連クラスの前方宣言
-class UIInputMappingContext;
-class UInputAction;
-
-class UPaperSpriteComponent;
+// アニメション関連クラス
+class UPaperZDAnimInstance;
+class UPaperZDAnimationComponent;
 
 UCLASS()
 class CHANGE_API AMainCharacter : public ACharacter
@@ -42,7 +37,6 @@ public:
 
 	// 入力コンポネントとメソッドのバインド
 	virtual void SetupPlayerInputComponent(class UInputComponent* _playerInputComponent) override;
-
 	// プレイヤーの移動処理
 	void UpdateMovement(const FVector2f& MovementVector);
 
@@ -54,18 +48,28 @@ public:
 
 	// プレイヤーの向きを更新する
 	void UpdateDirection(const FVector2f& MovementVector);
-protected:
-	// スプライトコンポーネント
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Sprite")
-	UPaperSpriteComponent* MySpriteComponent;
 
+
+public:
+	// アニメションをコントロールするコンポネント
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation")
+	TObjectPtr<UPaperZDAnimationComponent> AnimationComponent;
+
+	// 人類のアニメションインスタンス
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
+	TSubclassOf<UPaperZDAnimInstance> AS_Human;
+
+	// 猪のアニメションインスタンス
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
+	TSubclassOf<UPaperZDAnimInstance> AS_Boar;
 
 private:
 	// プレイヤーの状態
-	EPlayerState PlayerState;
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	EPlayerState CurrentPlayerState;
 
 	// プレイヤーの向き
-	UPROPERTY(BlueprintReadOnly, meta=(AllowPrivateAccess = "true"))
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	EPlayerDirection PlayerDirection;
 
 	// 変身時の状態
