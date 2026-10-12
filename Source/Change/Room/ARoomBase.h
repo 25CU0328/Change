@@ -20,7 +20,10 @@ protected:
 	// ゲーム開始時の処理
 	virtual void BeginPlay() override;
 
+	// ゲーム終了時処理
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 public:
-	// 毎フレームの処理（必要であれば有効化してください）
+	// 毎フレームの処理
 	virtual void Tick(float DeltaTime) override;
+
 };

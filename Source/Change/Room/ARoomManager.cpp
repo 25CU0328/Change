@@ -3,10 +3,13 @@
 
 #include "ARoomManager.h"
 #include "ARoomBase.h"
+
+#include "Change/Event/GameEventSubsystem.h"
 // コンストラクター
 AARoomManager::AARoomManager()
 {
-
+    CurrentRoom = nullptr;
+    CurrentRoomIndex = 0;
 }
 
 // ゲーム開始時の処理
@@ -14,10 +17,30 @@ void AARoomManager::BeginPlay()
 {
 	Super::BeginPlay();
 	
+    if (!GetGameInstance())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Can't Get GameInstance"));
+        return;
+    }
+    auto* EventSubsystem = GetGameInstance()->GetSubsystem<UGameEventSubsystem>();
+    if (!EventSubsystem)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("GameEventSubsystem not available"));
+        return;
+    }
+
+    // イベントを登録する
+    EventSubsystem->Register<AARoomManager>(
+        EGameEvent::RoomClear,
+        this,
+        &AARoomManager::OnRoomCleared
+    );
+
+    GenerateRoom();
 }
 
-// 現在ルームがクリアされたら呼び出す
-void AARoomManager::OnCurrentRoomCleared()
+// ルームがクリアされた時呼び出される関数
+void AARoomManager::OnRoomCleared(const FString& EventData)
 {
 	// 現在ルームを削除
 	RemoveCurrentRoom();
@@ -120,6 +143,7 @@ void AARoomManager::GenerateRoom()
             CurrentRoomIndex,
             RoomArrayIndex
         );
+        return;
     }
 }
 

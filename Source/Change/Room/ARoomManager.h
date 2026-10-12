@@ -57,14 +57,13 @@ private:
 	// コールバック関数
 	// --------------
 private:
-	// 現在ルームがクリアされたら呼び出す
-	void OnCurrentRoomCleared();
+	// ルームがクリアされた時呼び出される関数
+	void OnRoomCleared(const FString& EventData);
 
 private:
 	// ルームを生成する
 	void GenerateRoom();
 	// 現在ルームを削除する
 	void RemoveCurrentRoom();
-
 
 };
