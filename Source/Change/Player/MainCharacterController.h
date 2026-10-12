@@ -56,16 +56,25 @@ private:
 	UInputAction* IA_UseAbility;
 
 	AMainCharacter* MainCharacter; // プレイヤー
+
 private:
 	// プレイヤーの移動処理
+	UFUNCTION()
 	void OnIA_PlayerMove(const FInputActionValue& InputValue);
-	// 猪に変身するボタンが押されたら呼び出される関数
-	void OnIA_TransformBoar();
-	// 兎に変身するボタンが押されたら呼び出される関数
-	void OnIA_TransformRabbit();
-	// 変身を解除するボタンが押されたら呼び出される関数
-	void OnIA_TransformCancel();
-	// 能力使用ボタンが押されたら呼び出される関数
-	void OnIA_UseAbility();
 
+	// 猪に変身するボタンが押されたら呼び出される関数
+	UFUNCTION()
+	void OnIA_TransformBoar();
+
+	// 兎に変身するボタンが押されたら呼び出される関数
+	UFUNCTION()
+	void OnIA_TransformRabbit();
+
+	// 変身を解除するボタンが押されたら呼び出される関数
+	UFUNCTION()
+	void OnIA_TransformCancel();
+
+	// 能力使用ボタンが押されたら呼び出される関数
+	UFUNCTION()
+	void OnIA_UseAbility();
 };
