@@ -11,19 +11,7 @@
 void AMainCharacterController::BeginPlay()
 {
 	Super::BeginPlay();
-
-    // Subsystemを取得できないなら処理しない
-    auto* subsystem =
-        ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
-    if (!subsystem)
-        return;
-
-    // IMCが設定されたなら
-    if (InputMappingContext) {
-        // SubsystemにIMCを追加する
-        subsystem->AddMappingContext(InputMappingContext, 0);
-    }
-
+	
 	MainCharacter = Cast<AMainCharacter>(GetPawn());
 }
 
@@ -33,10 +21,30 @@ void AMainCharacterController::SetupInputComponent()
 	Super::SetupInputComponent();
 
 	// UEnhancedInputComponentを取得する
-	auto* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(InputComponent);
+	UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent);
 	// 失敗した場合は処理しない
 	if (!EnhancedInputComponent)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to cast Enhance Input Component!!"));
 		return;
+	}
+
+	// Subsystemを取得できないなら処理しない
+	auto* subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
+	if (!subsystem)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to GetSubsystem!!"));
+		return;
+	}
+
+	// IMCが設定されたなら
+	if (InputMappingContext) {
+		// SubsystemにIMCを追加する
+		subsystem->AddMappingContext(InputMappingContext, 0);
+	}
+
+
+	InputComponent->BindKey(EKeys::G, IE_Pressed, this, &AMainCharacterController::OnIA_TransformBoar);
 
 	// 移動のIAが設定された場合
 	if (IA_PlayerMove) {
@@ -73,6 +81,18 @@ void AMainCharacterController::SetupInputComponent()
 		);
 	}
 
+	// 変身の解除のIAが設定された場合
+	if (IA_TransformCancel)
+	{
+		// ボタンが押された瞬間 (Started)
+		EnhancedInputComponent->BindAction(
+			IA_TransformCancel,
+			ETriggerEvent::Started,
+			this,
+			&AMainCharacterController::OnIA_TransformCancel
+		);
+	}
+
 	// 能力使用のIAが設定された場合
 	if (IA_UseAbility)
 	{
@@ -86,14 +106,13 @@ void AMainCharacterController::SetupInputComponent()
 	}
 }
 
-
 // プレイヤーの移動処理
 void AMainCharacterController::OnIA_PlayerMove(const FInputActionValue& InputValue)
 {
 	// キーボードの入力から移動ベクトルを取得
 	FVector2f MovementVector = FVector2f(
 		InputValue.Get<FVector>().X,
-		InputValue.Get<FVector>().Z
+		InputValue.Get<FVector>().Y
 	);
 	// 移動の更新処理
 	MainCharacter->UpdateMovement(MovementVector);
@@ -105,13 +124,19 @@ void AMainCharacterController::OnIA_PlayerMove(const FInputActionValue& InputVal
 // 猪に変身するボタンが押されたら呼び出される関数
 void AMainCharacterController::OnIA_TransformBoar()
 {
-
+	MainCharacter->UpdateTransformBoar();
 }
 
 // 兎に変身するボタンが押されたら呼び出される関数
 void AMainCharacterController::OnIA_TransformRabbit()
 {
 
+}
+
+// 変身を解除するボタンが押されたら呼び出される関数
+void AMainCharacterController::OnIA_TransformCancel()
+{
+	MainCharacter->UpdateTransformCancel();
 }
 
 // 能力使用ボタンが押されたら呼び出される関数

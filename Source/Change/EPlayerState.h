@@ -1,7 +1,10 @@
 ﻿
+#pragma once
+
 // プレイヤーの状態を表す列挙型
-enum class EPlayerState
+UENUM(BlueprintType)
+enum class EPlayerState : uint8
 {
 	Idle	UMETA(DisplayName = "Idle"),
-	Move	UMETA(DisplayName = "Move"),
+	Moving	UMETA(DisplayName = "Moving"),
 };
