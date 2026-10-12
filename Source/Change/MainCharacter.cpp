@@ -80,8 +80,6 @@ void AMainCharacter::UpdateMovement(const FVector2f& MovementVector)
 		return;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("MovementVector With (%f, %f)"), MovementVector.X, MovementVector.Y);
-
 	if (MovementVector.X != 0.0f)
 	{
 		if (MovementComponent->Velocity.Z != 0.0f)
@@ -110,8 +108,6 @@ void AMainCharacter::UpdateMovement(const FVector2f& MovementVector)
 // プレイヤーの向きを更新する
 void AMainCharacter::UpdateDirection(const FVector2f& MovementVector)
 {
-	UE_LOG(LogTemp, Warning, TEXT("UpdateDirection With (%f, %f)"), MovementVector.X, MovementVector.Y);
-
 	// 水平方向の入力を優先する
 	if (FMath::Abs(MovementVector.X) != 0.0f)
 	{
@@ -168,6 +164,8 @@ void AMainCharacter::UpdateTransformBoar()
 		UE_LOG(LogTemp, Error, TEXT("AS_Boar doesn't Exit"));
 		return;
 	}
+
+	// 猪のアニメーションインスタンスを取得する
 	AnimationComponent->SetAnimInstanceClass(AS_Boar);
 }
 
@@ -175,5 +173,18 @@ void AMainCharacter::UpdateTransformBoar()
 void AMainCharacter::UpdateTransformCancel()
 {
 	TransformState = ETransformState::Human;
+	if (!AnimationComponent)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Animation Component doesn't Exit"));
+		return;
+	}
 
+	if (!AS_Human)
+	{
+		UE_LOG(LogTemp, Error, TEXT("AS_Human has not been assigned already!"));
+		return;
+	}
+
+	// 人のアニメーションインスタンスを取得する
+	AnimationComponent->SetAnimInstanceClass(AS_Human);
 }
