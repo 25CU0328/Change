@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-
+#include "RoomArrayData.h"
 #include "ARoomManager.generated.h"
 
 // ルームのベースクラスの前方宣言
@@ -25,25 +25,9 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	// ルーム1の配列
+	// FRoomArrayDataを管理する配列
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Room")
-	TArray<TSubclassOf<ARoomBase>> Room1Array;
-
-	// ルーム2の配列
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Room")
-	TArray<TSubclassOf<ARoomBase>> Room2Array;
-
-	// ルーム3の配列
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Room")
-	TArray<TSubclassOf<ARoomBase>> Room3Array;
-
-	// ルーム4の配列
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Room")
-	TArray<TSubclassOf<ARoomBase>> Room4Array;
-
-	// ルーム5の配列
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Room")
-	TArray<TSubclassOf<ARoomBase>> Room5Array;
+	TArray<FRoomArrayData> RoomArrayDatas;
 
 private:
 	// ルーム番号を表す変数

@@ -62,37 +62,10 @@ void AARoomManager::GenerateRoom()
     }
 
 	// 目標ルーム配列を表す変数
-	TArray<TSubclassOf<ARoomBase>>* RoomArray = nullptr;
-
-    switch (CurrentRoomIndex)
-    {
-    case 0:
-        RoomArray = &Room1Array;
-        break;
-
-    case 1:
-        RoomArray = &Room2Array;
-        break;
-
-    case 2:
-        RoomArray = &Room3Array;
-        break;
-
-    case 3:
-        RoomArray = &Room4Array;
-        break;
-
-    case 4:
-        RoomArray = &Room5Array;
-        break;
-
-    default:
-        // ルーム 1~5全部完成した場合
-        return;
-    }
+    const auto& RoomArrayData = RoomArrayDatas[CurrentRoomIndex];
 
     // 配列はヌルまたは空の場合、処理しない
-    if (RoomArray == nullptr || RoomArray->IsEmpty())
+    if (RoomArrayData.Rooms.IsEmpty())
     {
         UE_LOG(
             LogTemp,
@@ -104,10 +77,10 @@ void AARoomManager::GenerateRoom()
     }
     
     // ルーム配列内の番号を取得する
-    const int RoomArrayIndex = FMath::RandRange(0, RoomArray->Num() - 1);
+    const int RoomArrayIndex = FMath::RandRange(0, RoomArrayData.Rooms.Num() - 1);
 
     // 選択されたルームを取得する
-    TSubclassOf<ARoomBase> SelectedRoom = (*RoomArray)[RoomArrayIndex];
+    TSubclassOf<ARoomBase> SelectedRoom = RoomArrayData.Rooms[RoomArrayIndex];
 
     // 選択されたルームがヌルの場合、処理しない
     if (!SelectedRoom)
