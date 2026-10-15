@@ -1,6 +1,7 @@
-#pragma once
+﻿#pragma once
 
-enum class ETransformState
+UENUM(BlueprintType)
+enum class ETransformState : uint8
 {
 	None,
 	Human,

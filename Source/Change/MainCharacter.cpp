@@ -4,14 +4,17 @@
 #include "MainCharacter.h"
 #include "Kismet/KismetSystemLibrary.h" 
 #include "Kismet/GameplayStatics.h" 
-#include "Player/MainCharacterController.h"		// プレイヤーコントローラーのクラスを使うため
+
+// プレイヤーコントローラーのクラスを使うため
+#include "Player/MainCharacterController.h"		
 
 // PaperZDアニメションをコントロールするためインクルード
 #include "PaperZDCharacter.h"
 #include "PaperZDAnimationComponent.h"
 #include "PaperZDAnimInstance.h"
 
-#include "GameFramework/CharacterMovementComponent.h" // UCharacterMovementComponent を使うためのヘッダー
+// UCharacterMovementComponent を使うためのヘッダー
+#include "GameFramework/CharacterMovementComponent.h" 
 
 // Sets default values
 AMainCharacter::AMainCharacter()
@@ -44,6 +47,9 @@ void AMainCharacter::BeginPlay()
 
 	// アニメーションコンポネントを取得する
 	AnimationComponent = FindComponentByClass<UPaperZDAnimationComponent>();
+
+	// 変身データを管理するコンポネントを取得する
+	CharacterFormDataComponent = FindComponentByClass<UCharacterFormDataComponent>();
 
 	// プレイヤーの状態をアイドル状態に初期化
 	CurrentPlayerState = EPlayerState::Idle;
@@ -149,42 +155,44 @@ void AMainCharacter::UpdatePlayerState()
 	}
 }
 
+// 変身データを更新する
+void AMainCharacter::ApplyCharacterFormData()
+{
+	// データを取得する
+	auto Data = CharacterFormDataComponent->GetData(TransformState);
+	// アニメーションインスタンスがヌルの場合、処理しない
+	if (!Data.AnimationInstance)
+	{
+		UE_LOG(
+			LogTemp,
+			Error,
+			TEXT("Animation Instance Is Null!!")
+		);
+		return;
+	}
+
+	// アニメーションインスタンスを設定する
+	AnimationComponent->SetAnimInstanceClass(Data.AnimationInstance);
+
+	MovementComponent->BrakingDecelerationFlying = Data.Deceleration;
+	MovementComponent->MaxFlySpeed = Data.MaxSpeed;
+	MovementComponent->MaxAcceleration = Data.Acceleration;
+}
+
 // 猪に変身したときの処理
 void AMainCharacter::UpdateTransformBoar()
 {
 	TransformState = ETransformState::Boar;
 
-	if (!AnimationComponent)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Animation Component doesn't Exit"));
-		return;
-	}
-	if (!AS_Boar)
-	{
-		UE_LOG(LogTemp, Error, TEXT("AS_Boar doesn't Exit"));
-		return;
-	}
-
-	// 猪のアニメーションインスタンスを取得する
-	AnimationComponent->SetAnimInstanceClass(AS_Boar);
+	// 変身後のデータを適用する
+	ApplyCharacterFormData();
 }
 
 // 変身状態を解除するときの処理
 void AMainCharacter::UpdateTransformCancel()
 {
 	TransformState = ETransformState::Human;
-	if (!AnimationComponent)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Animation Component doesn't Exit"));
-		return;
-	}
 
-	if (!AS_Human)
-	{
-		UE_LOG(LogTemp, Error, TEXT("AS_Human has not been assigned already!"));
-		return;
-	}
-
-	// 人のアニメーションインスタンスを取得する
-	AnimationComponent->SetAnimInstanceClass(AS_Human);
+	// 変身後のデータを適用する
+	ApplyCharacterFormData();
 }

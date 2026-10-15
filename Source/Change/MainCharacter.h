@@ -9,7 +9,7 @@
 #include "EPlayerState.h"			// プレイヤーの状態
 #include "EPlayerDirection.h"		// プレイヤーの向き
 #include "ETransformState.h"		// 変身時の状態
-
+#include "Change/Player/CharacterFormDataComponent.h"
 #include "MainCharacter.generated.h"
 
 // アニメション関連クラス
@@ -76,12 +76,16 @@ private:
 	ETransformState TransformState;
 
 	// 移動処理を行うためのコンポーネント
-	UCharacterMovementComponent* MovementComponent;
+	TObjectPtr<UCharacterMovementComponent> MovementComponent;
 
+	// 変身データを管理するコンポネント
+	TObjectPtr<UCharacterFormDataComponent> CharacterFormDataComponent;
 
 private:
 	
 	// プレイヤー状態を更新する
 	void UpdatePlayerState();
 
+	// 変身データを適用する
+	void ApplyCharacterFormData();
 };
