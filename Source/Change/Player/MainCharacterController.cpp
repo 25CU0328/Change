@@ -5,7 +5,11 @@
 #include "EnhancedInputComponent.h"	// UEnhancedInputComponentを使うため
 #include "EnhancedInputSubsystems.h"// UEnhancedInputLocalPlayerSubsystemを使うため
 
+#include "Change/Event/GameEventSubsystem.h" // イベントマネージャーを取得するため
+
 #include "Change/MainCharacter.h" // プレイヤーのクラスをアクセスするため
+
+
 
 // ゲーム開始時の処理
 void AMainCharacterController::BeginPlay()
@@ -142,5 +146,10 @@ void AMainCharacterController::OnIA_TransformCancel()
 // 能力使用ボタンが押されたら呼び出される関数
 void AMainCharacterController::OnIA_UseAbility()
 {
+	auto* EventSubsystem = GetGameInstance()->GetSubsystem<UGameEventSubsystem>();
 
+	EventSubsystem->SendEvent(
+		EGameEvent::RoomClear,
+		""
+	);
 }

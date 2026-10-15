@@ -1,10 +1,12 @@
 ﻿#pragma once
 
-// ゲーム内のイベントを表す列挙型
-enum class EGameEvent
-{
-	None = -1,
+#include "CoreMinimal.h"
 
+// ゲーム内のイベントを表す列挙型
+UENUM(BlueprintType)
+enum class EGameEvent : uint8
+{
+	None = 0,
 
 	Transform, // 変身
 	UseAbility, // 能力使用
@@ -14,9 +16,9 @@ enum class EGameEvent
 	// -------------
 	// UI Event
 	// --------------
-	MainMenu_GameStartButtonPressed,	// メインメニュー開始ボタン
-	MainMenu_GameEndButtonPressed,		// メインメニューゲーム終了ボタン
+	StartGameButtonPressed,	// ゲーム開始ボタンが押された
+	EndGameButtonPressed,	// ゲーム終了ボタンが押された
 
-	InStageMenu_GameResumeButtonPressed,// ステージシーンでゲーム再開ボタン
-	InStageMenu_GameEndButtonPressed,		// ステージシーンでゲーム終了ボタン
+	ResumeButtonPressed,// ゲーム再開ボタンが押された
+	QuitButtonPressed,	// ステージを諦めるボタンが押された
 };
