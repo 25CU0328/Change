@@ -14,6 +14,12 @@ class CHANGE_API UGameFlowSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
 	
+	// --------------
+	// レベル名
+	// --------------
+	const FName MainMenuName = "L_MainMenu";
+	const FName StargeSceneName = "L_StageScene";
+
 public:
 	// サブシステムの初期化処理
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
@@ -23,8 +29,12 @@ public:
 
 
 private:
-	// ゲーム開始に関するイベントが送られたら
+	// ゲーム開始に関するイベントが送られたら呼び出されるメソッド
 	void OnGameStart(const FString& EventMessage);
-	// ゲーム終了に関するイベントが送られたら
+
+	// ステージがクリアされたら呼び出されるメソッド
+	void OnStageClear(const FString& EventMessage);
+
+	// ゲーム終了に関するイベントが送られたら呼び出されるメソッド
 	void OnGameEnd(const FString& EventMessage);
 };

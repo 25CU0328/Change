@@ -13,6 +13,8 @@ enum class EGameEvent : uint8
 
 	RoomClear, // ルームクリア
 	
+	TransitionLevel, // 別のレベルに遷移する
+
 	// -------------
 	// UI Event
 	// --------------

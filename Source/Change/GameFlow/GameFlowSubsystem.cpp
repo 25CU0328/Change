@@ -65,9 +65,23 @@ void UGameFlowSubsystem::OnGameStart(const FString& EventMessage)
         return;
     }
 
-    FName LevelName(EventMessage);
-    UGameplayStatics::OpenLevel(World, LevelName);
+    UGameplayStatics::OpenLevel(World, StargeSceneName);
 }
+
+// ステージがクリアされたら呼び出されるメソッド
+void UGameFlowSubsystem::OnStageClear(const FString& EventMessage)
+{
+    UWorld* World = GetWorld();
+
+    if (!World)
+    {
+        UE_LOG(LogTemp, Error, TEXT("Can't Get World!"));
+        return;
+    }
+
+    UGameplayStatics::OpenLevel(World, MainMenuName);
+}
+
 // ゲーム終了に関するイベントが送られたら
 void UGameFlowSubsystem::OnGameEnd(const FString& EventMessage)
 {
