@@ -42,6 +42,12 @@ void UGameFlowSubsystem::Initialize(FSubsystemCollectionBase& Collection)
         &UGameFlowSubsystem::OnGameEnd
     );
 
+    EventSubsystem->Register<UGameFlowSubsystem>(
+        EGameEvent::StageClear,
+        this,
+        &UGameFlowSubsystem::OnStageClear
+    );
+
     UE_LOG(LogTemp, Log, TEXT("GameFlowSubsystem Initialize"));
 }
 

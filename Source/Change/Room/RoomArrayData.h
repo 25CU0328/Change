@@ -2,9 +2,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-
-class ARoomBase;
-
+#include "RoomBase.h"
 #include "RoomArrayData.generated.h"
 
 // ルーム配列を管理するための構造体
