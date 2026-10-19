@@ -12,9 +12,11 @@ enum class EGameEvent : uint8
 	UseAbility, // 能力使用
 
 	RoomClear, // ルームクリア
-	
+	StageClear,
 	TransitionLevel, // 別のレベルに遷移する
 
+	SwitchPressed,	// スウィッチが押された
+	SwitchReleased, // スウィッチが離された
 	// -------------
 	// UI Event
 	// --------------
