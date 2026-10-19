@@ -1,19 +1,25 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "ARoomManager.h"
-#include "ARoomBase.h"
+#include "RoomManager.h"
+#include "RoomBase.h"
 
+// プレイヤークラスを取得するためインクルード
+#include "Kismet/GameplayStatics.h"
+#include "Change/MainCharacter.h"
+
+// イベントを利用するためインクルード
 #include "Change/Event/GameEventSubsystem.h"
+
 // コンストラクター
-AARoomManager::AARoomManager()
+ARoomManager::ARoomManager()
 {
     CurrentRoom = nullptr;
     CurrentRoomIndex = 0;
 }
 
 // ゲーム開始時の処理
-void AARoomManager::BeginPlay()
+void ARoomManager::BeginPlay()
 {
 	Super::BeginPlay();
 	
@@ -30,18 +36,47 @@ void AARoomManager::BeginPlay()
     }
 
     // イベントを登録する
-    EventSubsystem->Register<AARoomManager>(
+    EventSubsystem->Register<ARoomManager>(
         EGameEvent::RoomClear,
         this,
-        &AARoomManager::OnRoomCleared
+        &ARoomManager::OnRoomCleared
     );
+
+    Player = Cast<AMainCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+
+    if (Player == nullptr)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Player not found."));
+        return;
+    }
 
     GenerateRoom();
 }
 
-// ルームがクリアされた時呼び出される関数
-void AARoomManager::OnRoomCleared(const FString& EventData)
+// プレイヤーを取得する
+AMainCharacter* ARoomManager::GetPlayer()
 {
+    return Player.Get();
+}
+
+// ルームがクリアされた時呼び出される関数
+void ARoomManager::OnRoomCleared(const FString& EventData)
+{
+    if (IsAllRoomCleared())
+    {
+        auto* EventSubsystem = GetGameInstance()->GetSubsystem<UGameEventSubsystem>();
+        if (!EventSubsystem)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("GameEventSubsystem not available"));
+            return;
+        }
+
+        // イベントを発送
+        EventSubsystem->SendEvent(EGameEvent::StageClear, "");
+
+        return;
+    }
+
 	// 現在ルームを削除
 	RemoveCurrentRoom();
 
@@ -52,8 +87,14 @@ void AARoomManager::OnRoomCleared(const FString& EventData)
 	GenerateRoom();
 }
 
+// ルームが全部クリアされたか
+bool ARoomManager::IsAllRoomCleared()
+{
+    return CurrentRoomIndex >= RoomArrayDatas.Num();
+}
+
 // ルームを生成する
-void AARoomManager::GenerateRoom()
+void ARoomManager::GenerateRoom()
 {
     // 現在ルームが存在する場合、削除する
     if (CurrentRoom)
@@ -118,10 +159,31 @@ void AARoomManager::GenerateRoom()
         );
         return;
     }
+
+    UE_LOG(
+        LogTemp,
+        Warning,
+        TEXT("PlayerPos, (%.1f,%.1f,%.1f)"),
+        Player->GetTargetLocation(Player).X,
+        Player->GetTargetLocation(Player).Y,
+        Player->GetTargetLocation(Player).Z
+    );
+
+    // プレイヤーを出発点まで移動させる
+    Player->SetActorLocation(CurrentRoom->GetStartLocation());
+
+    UE_LOG(
+        LogTemp,
+        Warning,
+        TEXT("PlayerPos, (%.1f,%.1f,%.1f)"),
+        Player->GetTargetLocation(Player).X,
+        Player->GetTargetLocation(Player).Y,
+        Player->GetTargetLocation(Player).Z
+    );
 }
 
 // 現在ルームを削除する
-void AARoomManager::RemoveCurrentRoom()
+void ARoomManager::RemoveCurrentRoom()
 {
     // 現在ルームがヌルの場合、処理しない
     if (!CurrentRoom)

@@ -5,21 +5,24 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "RoomArrayData.h"
-#include "ARoomManager.generated.h"
+#include "RoomManager.generated.h"
 
 // ルームのベースクラスの前方宣言
 class ARoomBase;
+class AMainCharacter;
 
 // ルームを管理するマネージャー
 UCLASS()
-class CHANGE_API AARoomManager : public AActor
+class CHANGE_API ARoomManager : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
 	// コンストラクター
-	AARoomManager();
+	ARoomManager();
 
+	// プレイヤーを取得する
+	AMainCharacter* GetPlayer();
 protected:
 	// ゲーム開始時の処理
 	virtual void BeginPlay() override;
@@ -36,6 +39,8 @@ private:
 private:
 	// 現在ルーム
 	TObjectPtr<ARoomBase> CurrentRoom;
+	// プレイヤー
+	TObjectPtr<AMainCharacter> Player;
 
 	// --------------
 	// コールバック関数
@@ -44,6 +49,8 @@ private:
 	// ルームがクリアされた時呼び出される関数
 	void OnRoomCleared(const FString& EventData);
 
+	// ルームが全部クリアされたか
+	bool IsAllRoomCleared();
 private:
 	// ルームを生成する
 	void GenerateRoom();
