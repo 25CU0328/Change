@@ -98,7 +98,8 @@ public:
 
 	bool GetIsUesAbility() { return m_bUesingAbility; }
 
-
+	void SetMove(bool _floa) { _floa = StopMove; }
+	bool GetMove() { return StopMove; }
 private:
 	
 	// プレイヤー状態を更新する
@@ -114,6 +115,7 @@ private:
 
 	bool m_bUesingAbility;
 	bool CanuesAbility;
+	bool StopMove;
 
 	EPlayerState PlayerState;
 };

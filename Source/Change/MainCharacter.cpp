@@ -20,8 +20,8 @@
 // Sets default values
 AMainCharacter::AMainCharacter()
 	:m_bUesingAbility(false)
-	, CanuesAbility(false)
-	
+	,CanuesAbility(false)
+     ,StopMove(false)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -97,8 +97,30 @@ void AMainCharacter::UpdateMovement(const FVector2f& MovementVector)
 			// 移動を停止）
 			MovementComponent->StopMovementImmediately();
 		}
-
 		// キャラクターの右方向に移動する
+		if (m_bUesingAbility)
+		{
+		    if (PlayerDirection == EPlayerDirection::Up || PlayerDirection == EPlayerDirection::Down)
+		    {
+			   return;
+		    }
+		    else if (PlayerDirection == EPlayerDirection::Right)
+		    {
+			   if (MovementVector.X < 0.0f)
+			   {
+				  return;
+			   }
+		    }
+		    else if (PlayerDirection == EPlayerDirection::Left)
+		    {
+			   if (MovementVector.X >= 0.0f)
+			   {
+				  return;
+			   }
+		    }
+		}
+
+		
 		AddMovementInput(FVector(1, 0, 0), MovementVector.X);
 	}
 	else if (MovementVector.Y != 0.0f)
@@ -107,6 +129,29 @@ void AMainCharacter::UpdateMovement(const FVector2f& MovementVector)
 		{
 			// 移動を停止）
 			MovementComponent->StopMovementImmediately();
+		}
+
+		// キャラクターの右方向に移動する
+		if (m_bUesingAbility)
+		{
+		    if (PlayerDirection == EPlayerDirection::Right|| PlayerDirection == EPlayerDirection::Left)
+		    {
+			   return;
+		    }
+		    else if (PlayerDirection == EPlayerDirection::Down)
+		    {
+			   if (MovementVector.Y > 0.0f)
+			   {
+				  return;
+			   }
+		    }
+		    else if (PlayerDirection == EPlayerDirection::Up)
+		    {
+			   if (MovementVector.Y <= 0.0f)
+			   {
+				  return;
+			   }
+		    }
 		}
 
 		// キャラクターの前方向に移動する
@@ -118,6 +163,7 @@ void AMainCharacter::UpdateMovement(const FVector2f& MovementVector)
 // プレイヤーの向きを更新する
 void AMainCharacter::UpdateDirection(const FVector2f& MovementVector)
 {
+
 	// 水平方向の入力を優先する
 	if (FMath::Abs(MovementVector.X) != 0.0f)
 	{

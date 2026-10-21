@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -12,6 +12,7 @@
 class UBoxComponent;
 class UMeshComponent;
 class AMainCharacter;
+class UPaperSpriteComponent;
 
 UCLASS()
 class CHANGE_API AStone : public AActor
@@ -46,6 +47,8 @@ public:
 	void SetUseAbility(bool _uesability){ m_IsUesAbility = _uesability; }
 
 	void Coulbauk(const FString & Message);
+	UPROPERTY()
+	TObjectPtr<UPaperSpriteComponent> SpriteComponent;
 
 private:
 
@@ -65,6 +68,8 @@ public:
 	// ベースコンポ―ネット
 	UPROPERTY()
 	USceneComponent* m_pBase;
+
+	void colader();
 
 	
 
