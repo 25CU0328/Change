@@ -7,6 +7,7 @@
 
 // プレイヤーコントローラーのクラスを使うため
 #include "Player/MainCharacterController.h"		
+#include "Gimmick/Stone.h"
 
 // PaperZDアニメションをコントロールするためインクルード
 #include "PaperZDCharacter.h"
@@ -18,6 +19,9 @@
 
 // Sets default values
 AMainCharacter::AMainCharacter()
+	:m_bUesingAbility(false)
+	, CanuesAbility(false)
+	
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -195,4 +199,24 @@ void AMainCharacter::UpdateTransformCancel()
 
 	// 変身後のデータを適用する
 	ApplyCharacterFormData();
+}
+
+// 能力を使う時の処理
+void AMainCharacter::UpdateUseAbility()
+{
+	if (!CanuesAbility) {
+		//デバッグ確認用
+		UE_LOG(LogTemp, Warning, TEXT("PLAYER not Ablity"));
+		return;
+	}
+
+	if (!m_bUesingAbility)
+	{
+		m_bUesingAbility = true;
+	}
+	else
+	{
+		m_bUesingAbility = false;
+
+	}
 }

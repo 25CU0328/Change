@@ -81,6 +81,22 @@ private:
 	// 変身データを管理するコンポネント
 	TObjectPtr<UCharacterFormDataComponent> CharacterFormDataComponent;
 
+	UPROPERTY()
+	AActor* m_pLiftObject;					//持ち上げているオブジェクト情報
+
+public:
+	// 現在の変身状態を返す
+	ETransformState GetTransformState() { return TransformState; }
+
+	// 現在の変身状態を返す
+	EPlayerState GetPlayertate() { return PlayerState; }
+
+
+	void SetCanuesAbility(bool b_flg) { CanuesAbility = b_flg; }
+
+	bool GetIsUesAbility() { return m_bUesingAbility; }
+
+
 private:
 	
 	// プレイヤー状態を更新する
@@ -88,4 +104,11 @@ private:
 
 	// 変身データを適用する
 	void ApplyCharacterFormData();
+	// アビリティを使用時のレイキャスト処理
+	void UpdateUesAbilityLine();
+
+private:
+	//アビリティ使用状態フラグ
+	bool m_bUesingAbility;
+	bool CanuesAbility;
 };

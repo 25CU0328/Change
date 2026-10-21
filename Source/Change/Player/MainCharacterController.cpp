@@ -8,6 +8,7 @@
 #include "Change/Event/GameEventSubsystem.h" // イベントマネージャーを取得するため
 
 #include "Change/MainCharacter.h" // プレイヤーのクラスをアクセスするため
+#include "Change/EPlayerState.h"
 
 
 
@@ -64,7 +65,7 @@ void AMainCharacterController::SetupInputComponent()
 	// 変身のIAが設定された場合
 	if (IA_TransformBoar)
 	{
-		// ボタンが押された瞬間 (Started)
+		// ボタンが押された瞬間
 		EnhancedInputComponent->BindAction(
 			IA_TransformBoar,
 			ETriggerEvent::Started,
@@ -145,11 +146,8 @@ void AMainCharacterController::OnIA_TransformCancel()
 
 // 能力使用ボタンが押されたら呼び出される関数
 void AMainCharacterController::OnIA_UseAbility()
-{
-	auto* EventSubsystem = GetGameInstance()->GetSubsystem<UGameEventSubsystem>();
-
-	EventSubsystem->SendEvent(
-		EGameEvent::RoomClear,
-		""
-	);
+{	
+	//UGameEventSubsystem* pEventSubsystem = Cast<UGameEventSubsystem>(GetGameInstance());
+	//pEventSubsystem->SendEvent(EGameEvent::UseAbility, "UseAbility");
+	MainCharacter->UpdateUseAbility();
 }
