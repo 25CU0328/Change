@@ -1,28 +1,29 @@
-ï»¿#pragma once
+#pragma once
 
 #include "CoreMinimal.h"
 
-// ã‚²ãƒ¼ãƒ å†…ã®ã‚¤ãƒ™ãƒ³ãƒˆã‚’è¡¨ã™åˆ—æŒ™å‹
+// ƒQ[ƒ€“à‚ÌƒCƒxƒ“ƒg‚ğ•\‚·—ñ‹“Œ^
 UENUM(BlueprintType)
 enum class EGameEvent : uint8
 {
 	None = 0,
 
-	Transform, // å¤‰èº«
-	UseAbility, // èƒ½åŠ›ä½¿ç”¨
+	Transform, // •Ïg
+	UseAbility, // ”\—Íg—p
 
-	RoomClear, // ãƒ«ãƒ¼ãƒ ã‚¯ãƒªã‚¢
-	StageClear,
-	TransitionLevel, // åˆ¥ã®ãƒ¬ãƒ™ãƒ«ã«é·ç§»ã™ã‚‹
+	RoomClear, // ƒ‹[ƒ€ƒNƒŠƒA
+	RoomReset, // ƒ‹[ƒ€ƒŠƒZƒbƒg
+	StageClear,// ƒXƒe[ƒWƒNƒŠƒA
+	TransitionLevel, // •Ê‚ÌƒŒƒxƒ‹‚É‘JˆÚ‚·‚é
 
-	SwitchPressed,	// ã‚¹ã‚¦ã‚£ãƒƒãƒãŒæŠ¼ã•ã‚ŒãŸ
-	SwitchReleased, // ã‚¹ã‚¦ã‚£ãƒƒãƒãŒé›¢ã•ã‚ŒãŸ
+	SwitchPressed,	// ƒXƒEƒBƒbƒ`‚ª‰Ÿ‚³‚ê‚½
+	SwitchReleased, // ƒXƒEƒBƒbƒ`‚ª—£‚³‚ê‚½
 	// -------------
 	// UI Event
 	// --------------
-	StartGameButtonPressed,	// ã‚²ãƒ¼ãƒ é–‹å§‹ãƒœã‚¿ãƒ³ãŒæŠ¼ã•ã‚ŒãŸ
-	EndGameButtonPressed,	// ã‚²ãƒ¼ãƒ çµ‚äº†ãƒœã‚¿ãƒ³ãŒæŠ¼ã•ã‚ŒãŸ
+	StartGameButtonPressed,	// ƒQ[ƒ€ŠJnƒ{ƒ^ƒ“‚ª‰Ÿ‚³‚ê‚½
+	EndGameButtonPressed,	// ƒQ[ƒ€I—¹ƒ{ƒ^ƒ“‚ª‰Ÿ‚³‚ê‚½
 
-	ResumeButtonPressed,// ã‚²ãƒ¼ãƒ å†é–‹ãƒœã‚¿ãƒ³ãŒæŠ¼ã•ã‚ŒãŸ
-	QuitButtonPressed,	// ã‚¹ãƒ†ãƒ¼ã‚¸ã‚’è«¦ã‚ã‚‹ãƒœã‚¿ãƒ³ãŒæŠ¼ã•ã‚ŒãŸ
+	ResumeButtonPressed,// ƒQ[ƒ€ÄŠJƒ{ƒ^ƒ“‚ª‰Ÿ‚³‚ê‚½
+	QuitButtonPressed,	// ƒXƒe[ƒW‚ğ’ú‚ß‚éƒ{ƒ^ƒ“‚ª‰Ÿ‚³‚ê‚½
 };

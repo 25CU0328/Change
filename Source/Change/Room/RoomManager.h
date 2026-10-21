@@ -1,4 +1,4 @@
-ï»¿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -7,54 +7,61 @@
 #include "RoomArrayData.h"
 #include "RoomManager.generated.h"
 
-// ãƒ«ãƒ¼ãƒ ã®ãƒ™ãƒ¼ã‚¹ã‚¯ãƒ©ã‚¹ã®å‰æ–¹å®£è¨€
+// ƒ‹[ƒ€‚Ìƒx[ƒXƒNƒ‰ƒX‚Ì‘O•ûéŒ¾
 class ARoomBase;
 class AMainCharacter;
 
-// ãƒ«ãƒ¼ãƒ ã‚’ç®¡ç†ã™ã‚‹ãƒãƒãƒ¼ã‚¸ãƒ£ãƒ¼
+// ƒ‹[ƒ€‚ğŠÇ—‚·‚éƒ}ƒl[ƒWƒƒ[
 UCLASS()
 class CHANGE_API ARoomManager : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
-	// ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ãƒ¼
+	// ƒRƒ“ƒXƒgƒ‰ƒNƒ^[
 	ARoomManager();
 
-	// ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã‚’å–å¾—ã™ã‚‹
+	// ƒvƒŒƒCƒ„[‚ğæ“¾‚·‚é
 	AMainCharacter* GetPlayer();
 protected:
-	// ã‚²ãƒ¼ãƒ é–‹å§‹æ™‚ã®å‡¦ç†
+	// ƒQ[ƒ€ŠJn‚Ìˆ—
 	virtual void BeginPlay() override;
 
 public:
-	// FRoomArrayDataã‚’ç®¡ç†ã™ã‚‹é…åˆ—
+	// FRoomArrayData‚ğŠÇ—‚·‚é”z—ñ
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Room")
 	TArray<FRoomArrayData> RoomArrayDatas;
 
 private:
-	// ãƒ«ãƒ¼ãƒ ç•ªå·ã‚’è¡¨ã™å¤‰æ•°
+	// ƒ‹[ƒ€”Ô†‚ğ•\‚·•Ï”
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Room", meta = (AllowPrivateAccess = "true"))
-	int CurrentRoomIndex = 0;
+	// ƒf[ƒ^‚Ì”Ô†
+	int CurrentDataIndex = 0;
+	// ƒf[ƒ^“à‚Ì”z—ñ”Ô†
+	int CurrentDataArrayIndex = 0;
 private:
-	// ç¾åœ¨ãƒ«ãƒ¼ãƒ 
+	// Œ»İƒ‹[ƒ€
 	TObjectPtr<ARoomBase> CurrentRoom;
-	// ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼
+	// ƒvƒŒƒCƒ„[
 	TObjectPtr<AMainCharacter> Player;
 
 	// --------------
-	// ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯é–¢æ•°
+	// ƒR[ƒ‹ƒoƒbƒNŠÖ”
 	// --------------
 private:
-	// ãƒ«ãƒ¼ãƒ ãŒã‚¯ãƒªã‚¢ã•ã‚ŒãŸæ™‚å‘¼ã³å‡ºã•ã‚Œã‚‹é–¢æ•°
-	void OnRoomCleared(const FString& EventData);
-
-	// ãƒ«ãƒ¼ãƒ ãŒå…¨éƒ¨ã‚¯ãƒªã‚¢ã•ã‚ŒãŸã‹
+	// ƒ‹[ƒ€‚ªƒNƒŠƒA‚³‚ê‚½ŒÄ‚Ño‚³‚ê‚éƒƒ\ƒbƒh
+	void OnRoomCleared(const FString& EventMessage);
+	// ƒ‹[ƒ€‚ğƒŠƒZƒbƒg‚µ‚½‚¢ŒÄ‚Ño‚³‚ê‚½ƒƒ\ƒbƒh
+	void OnResetRoom(const FString& EventMessage);
+	// ƒ‹[ƒ€‚ª‘S•”ƒNƒŠƒA‚³‚ê‚½‚©
 	bool IsAllRoomCleared();
+
 private:
-	// ãƒ«ãƒ¼ãƒ ã‚’ç”Ÿæˆã™ã‚‹
+	// ƒ‹[ƒ€‚ğ¶¬‚·‚é
 	void GenerateRoom();
-	// ç¾åœ¨ãƒ«ãƒ¼ãƒ ã‚’å‰Šé™¤ã™ã‚‹
+	// Œ»İƒ‹[ƒ€‚ğíœ‚·‚é
 	void RemoveCurrentRoom();
+
+	
 
 };

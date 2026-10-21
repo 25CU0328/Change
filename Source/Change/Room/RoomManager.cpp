@@ -1,24 +1,24 @@
-ï»¿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "RoomManager.h"
 #include "RoomBase.h"
 
-// ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã‚¯ãƒ©ã‚¹ã‚’å–å¾—ã™ã‚‹ãŸã‚ã‚¤ãƒ³ã‚¯ãƒ«ãƒ¼ãƒ‰
+// ƒvƒŒƒCƒ„[ƒNƒ‰ƒX‚ğæ“¾‚·‚é‚½‚ßƒCƒ“ƒNƒ‹[ƒh
 #include "Kismet/GameplayStatics.h"
 #include "Change/MainCharacter.h"
 
-// ã‚¤ãƒ™ãƒ³ãƒˆã‚’åˆ©ç”¨ã™ã‚‹ãŸã‚ã‚¤ãƒ³ã‚¯ãƒ«ãƒ¼ãƒ‰
+// ƒCƒxƒ“ƒg‚ğ—˜—p‚·‚é‚½‚ßƒCƒ“ƒNƒ‹[ƒh
 #include "Change/Event/GameEventSubsystem.h"
 
-// ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ãƒ¼
+// ƒRƒ“ƒXƒgƒ‰ƒNƒ^[
 ARoomManager::ARoomManager()
 {
     CurrentRoom = nullptr;
-    CurrentRoomIndex = 0;
+    CurrentDataIndex = 0;
 }
 
-// ã‚²ãƒ¼ãƒ é–‹å§‹æ™‚ã®å‡¦ç†
+// ƒQ[ƒ€ŠJn‚Ìˆ—
 void ARoomManager::BeginPlay()
 {
 	Super::BeginPlay();
@@ -35,12 +35,19 @@ void ARoomManager::BeginPlay()
         return;
     }
 
-    // ã‚¤ãƒ™ãƒ³ãƒˆã‚’ç™»éŒ²ã™ã‚‹
+    // ƒCƒxƒ“ƒg‚ğ“o˜^‚·‚é
     EventSubsystem->Register<ARoomManager>(
         EGameEvent::RoomClear,
         this,
         &ARoomManager::OnRoomCleared
     );
+
+    EventSubsystem->Register<ARoomManager>(
+        EGameEvent::RoomReset,
+        this,
+        &ARoomManager::OnResetRoom
+    );
+
 
     Player = Cast<AMainCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
 
@@ -53,14 +60,14 @@ void ARoomManager::BeginPlay()
     GenerateRoom();
 }
 
-// ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã‚’å–å¾—ã™ã‚‹
+// ƒvƒŒƒCƒ„[‚ğæ“¾‚·‚é
 AMainCharacter* ARoomManager::GetPlayer()
 {
     return Player.Get();
 }
 
-// ãƒ«ãƒ¼ãƒ ãŒã‚¯ãƒªã‚¢ã•ã‚ŒãŸæ™‚å‘¼ã³å‡ºã•ã‚Œã‚‹é–¢æ•°
-void ARoomManager::OnRoomCleared(const FString& EventData)
+// ƒ‹[ƒ€‚ªƒNƒŠƒA‚³‚ê‚½ŒÄ‚Ño‚³‚ê‚éŠÖ”
+void ARoomManager::OnRoomCleared(const FString& EventMessage)
 {
     if (IsAllRoomCleared())
     {
@@ -71,75 +78,86 @@ void ARoomManager::OnRoomCleared(const FString& EventData)
             return;
         }
 
-        // ã‚¤ãƒ™ãƒ³ãƒˆã‚’ç™ºé€
+        // ƒCƒxƒ“ƒg‚ğ”­‘—
         EventSubsystem->SendEvent(EGameEvent::StageClear, "");
 
         return;
     }
 
-	// ç¾åœ¨ãƒ«ãƒ¼ãƒ ã‚’å‰Šé™¤
+	// Œ»İƒ‹[ƒ€‚ğíœ
 	RemoveCurrentRoom();
 
-    // ãƒ«ãƒ¼ãƒ é…åˆ—ã®ç•ªå·ã‚’1å¢—ã‚„ã™
-	CurrentRoomIndex += 1;
+    // ƒ‹[ƒ€”z—ñ‚Ì”Ô†‚ğ1‘‚â‚·
+	CurrentDataIndex += 1;
+    // ƒf[ƒ^“à‚Ìƒ‹[ƒ€”Ô†‚ğæ“¾‚·‚é
+    CurrentDataArrayIndex = FMath::RandRange(0, RoomArrayDatas[CurrentDataIndex].Rooms.Num() - 1);
 
-    // æ–°ã—ã„ãƒ«ãƒ¼ãƒ ã‚’ç”Ÿæˆã™ã‚‹
+    // V‚µ‚¢ƒ‹[ƒ€‚ğ¶¬‚·‚é
 	GenerateRoom();
 }
 
-// ãƒ«ãƒ¼ãƒ ãŒå…¨éƒ¨ã‚¯ãƒªã‚¢ã•ã‚ŒãŸã‹
-bool ARoomManager::IsAllRoomCleared()
+// ƒ‹[ƒ€‚ğƒŠƒZƒbƒg‚µ‚½‚¢ŒÄ‚Ño‚³‚ê‚½ƒƒ\ƒbƒh
+void ARoomManager::OnResetRoom(const FString& EventMessage)
 {
-    return CurrentRoomIndex >= RoomArrayDatas.Num();
+    UE_LOG(LogTemp, Warning, TEXT("OnResetRoom"));
+    // Œ»İƒ‹[ƒ€‚ğíœ‚·‚é
+    RemoveCurrentRoom();
+    // ƒ‹[ƒ€‚ğ¶¬‚·‚é
+    GenerateRoom();
 }
 
-// ãƒ«ãƒ¼ãƒ ã‚’ç”Ÿæˆã™ã‚‹
+// ƒ‹[ƒ€‚ª‘S•”ƒNƒŠƒA‚³‚ê‚½‚©
+bool ARoomManager::IsAllRoomCleared()
+{
+    return CurrentDataIndex >= RoomArrayDatas.Num();
+}
+
+// ƒ‹[ƒ€‚ğ¶¬‚·‚é
 void ARoomManager::GenerateRoom()
 {
-    // ç¾åœ¨ãƒ«ãƒ¼ãƒ ãŒå­˜åœ¨ã™ã‚‹å ´åˆã€å‰Šé™¤ã™ã‚‹
+    // Œ»İƒ‹[ƒ€‚ª‘¶İ‚·‚éê‡Aíœ‚·‚é
     if (CurrentRoom)
     {
         RemoveCurrentRoom();
     }
 
-	// ç›®æ¨™ãƒ«ãƒ¼ãƒ é…åˆ—ã‚’è¡¨ã™å¤‰æ•°
-    const auto& RoomArrayData = RoomArrayDatas[CurrentRoomIndex];
+	// –Ú•Wƒ‹[ƒ€”z—ñ‚ğ•\‚·•Ï”
+    const auto& RoomArrayData = RoomArrayDatas[CurrentDataIndex];
 
-    // é…åˆ—ã¯ãƒŒãƒ«ã¾ãŸã¯ç©ºã®å ´åˆã€å‡¦ç†ã—ãªã„
+    // ”z—ñ‚Íƒkƒ‹‚Ü‚½‚Í‹ó‚Ìê‡Aˆ—‚µ‚È‚¢
     if (RoomArrayData.Rooms.IsEmpty())
     {
         UE_LOG(
             LogTemp,
             Warning,
             TEXT("Room%d array is empty!"),
-            CurrentRoomIndex
+            CurrentDataIndex
         );
         return;
     }
     
-    // ãƒ«ãƒ¼ãƒ é…åˆ—å†…ã®ç•ªå·ã‚’å–å¾—ã™ã‚‹
-    const int RoomArrayIndex = FMath::RandRange(0, RoomArrayData.Rooms.Num() - 1);
+    
 
-    // é¸æŠã•ã‚ŒãŸãƒ«ãƒ¼ãƒ ã‚’å–å¾—ã™ã‚‹
-    TSubclassOf<ARoomBase> SelectedRoom = RoomArrayData.Rooms[RoomArrayIndex];
+    // ‘I‘ğ‚³‚ê‚½ƒ‹[ƒ€‚ğæ“¾‚·‚é
+    TSubclassOf<ARoomBase> SelectedRoom = RoomArrayData.Rooms[CurrentDataArrayIndex];
 
-    // é¸æŠã•ã‚ŒãŸãƒ«ãƒ¼ãƒ ãŒãƒŒãƒ«ã®å ´åˆã€å‡¦ç†ã—ãªã„
+    // ‘I‘ğ‚³‚ê‚½ƒ‹[ƒ€‚ªƒkƒ‹‚Ìê‡Aˆ—‚µ‚È‚¢
     if (!SelectedRoom)
     {
         UE_LOG(
             LogTemp,
             Warning,
             TEXT("RoomNuber %d, in RoomArray%d hasn't been set."),
-            RoomArrayIndex,
-            CurrentRoomIndex
+            CurrentDataArrayIndex,
+            CurrentDataIndex
         );
         return;
     }
 
-    // ãƒ«ãƒ¼ãƒ ã®ã‚¢ã‚¯ã‚¿ãƒ¼ã‚’ç”Ÿæˆã™ã‚‹
+    // ƒ‹[ƒ€‚ÌƒAƒNƒ^[‚ğ¶¬‚·‚é
     FActorSpawnParameters SpawnParameters;
 
-    // ãƒ¯ãƒ¼ãƒ«ãƒ‰ã«ç”Ÿæˆã—ã¦ã€CurrentRoomã«ä»£å…¥ã™ã‚‹
+    // ƒ[ƒ‹ƒh‚É¶¬‚µ‚ÄACurrentRoom‚É‘ã“ü‚·‚é
     CurrentRoom = GetWorld()->SpawnActor<ARoomBase>(
         SelectedRoom,
         GetActorLocation(),
@@ -147,15 +165,15 @@ void ARoomManager::GenerateRoom()
         SpawnParameters
     );
 
-    // CurrentRoomãŒãƒŒãƒ«ã®å ´åˆã€å¤±æ•—ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’è¡¨ç¤ºã™ã‚‹
+    // CurrentRoom‚ªƒkƒ‹‚Ìê‡A¸”sƒƒbƒZ[ƒW‚ğ•\¦‚·‚é
     if (!CurrentRoom)
     {
         UE_LOG(
             LogTemp,
             Error,
             TEXT("Failed to spawn Room! (RoomArray%d[%d])"),
-            CurrentRoomIndex,
-            RoomArrayIndex
+            CurrentDataIndex,
+            CurrentDataArrayIndex
         );
         return;
     }
@@ -169,7 +187,7 @@ void ARoomManager::GenerateRoom()
         Player->GetTargetLocation(Player).Z
     );
 
-    // ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã‚’å‡ºç™ºç‚¹ã¾ã§ç§»å‹•ã•ã›ã‚‹
+    // ƒvƒŒƒCƒ„[‚ğo”­“_‚Ü‚ÅˆÚ“®‚³‚¹‚é
     Player->SetActorLocation(CurrentRoom->GetStartLocation());
 
     UE_LOG(
@@ -182,14 +200,14 @@ void ARoomManager::GenerateRoom()
     );
 }
 
-// ç¾åœ¨ãƒ«ãƒ¼ãƒ ã‚’å‰Šé™¤ã™ã‚‹
+// Œ»İƒ‹[ƒ€‚ğíœ‚·‚é
 void ARoomManager::RemoveCurrentRoom()
 {
-    // ç¾åœ¨ãƒ«ãƒ¼ãƒ ãŒãƒŒãƒ«ã®å ´åˆã€å‡¦ç†ã—ãªã„
+    // Œ»İƒ‹[ƒ€‚ªƒkƒ‹‚Ìê‡Aˆ—‚µ‚È‚¢
     if (!CurrentRoom)
         return;
 
-    // å‰Šé™¤é–¢æ•°ã‚’å‘¼ã³å‡ºã™
+    // íœŠÖ”‚ğŒÄ‚Ño‚·
     CurrentRoom->Destroy();
 
     CurrentRoom = nullptr;
