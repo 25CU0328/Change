@@ -46,6 +46,8 @@ public:
 	// 変身状態を解除するときの処理
 	void UpdateTransformCancel();
 
+	void UpdateUseAbility();
+
 	// プレイヤーの向きを更新する
 	void UpdateDirection(const FVector2f& MovementVector);
 
@@ -109,6 +111,9 @@ private:
 
 private:
 	//アビリティ使用状態フラグ
+
 	bool m_bUesingAbility;
 	bool CanuesAbility;
+
+	EPlayerState PlayerState;
 };

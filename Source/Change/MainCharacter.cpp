@@ -151,7 +151,7 @@ void AMainCharacter::UpdatePlayerState()
 		!FMath::IsNearlyZero(MovementComponent->Velocity.Z)
 	)
 	{
-		CurrentPlayerState = EPlayerState::Moving;
+		CurrentPlayerState = EPlayerState::Move;
 	}
 	else
 	{
