@@ -1,10 +1,11 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Stone.h"
 #include "Components/BoxComponent.h"
 #include "Change/Event/GameEventSubsystem.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "PaperSpriteComponent.h"
 
 // Sets default values
 AStone::AStone()
@@ -22,8 +23,11 @@ AStone::AStone()
 	// コリジョン判定用ボックスコンポ―ネット生成
 	m_pBoxComp = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionComp"));
 	m_pBoxComp->SetupAttachment(RootComponent);
+	// スプライトコンポネントを取得する
+	
+	
 
-
+	
 
 	//UGameEventSubsystem* pEventSubsystem = Cast<UGameEventSubsystem>(GetGameInstance());
 	//pEventSubsystem->Register(EGameEvent::UseAbility, this, &AStone::Coulbauk);
@@ -44,6 +48,17 @@ void AStone::BeginPlay()
 		m_pBoxComp->OnComponentBeginOverlap.AddDynamic(this, &AStone::OnOverlapBegin);
 		// 離れ始めた時のイベント登録
 		m_pBoxComp->OnComponentEndOverlap.AddDynamic(this, &AStone::OnOverlapEnd);
+	}
+
+	SpriteComponent = FindComponentByClass<UPaperSpriteComponent>();
+	if (SpriteComponent)
+	{
+		// 参照成功！ここでBP側のスプライトを操作できます
+		UE_LOG(LogTemp, Warning, TEXT("Sprite Component を発見しました"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Sprite Component が見つかりません！"));
 	}
 }
 
@@ -75,6 +90,7 @@ void AStone::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherAc
 				SetUseAbility(true);
 				//デバッグ確認用
 				UE_LOG(LogTemp, Warning, TEXT("OnOverlapBegin"));
+				m_pPlayerChara->SetMove(true);
 			}
 
 		}
@@ -107,6 +123,7 @@ void AStone::SetMovement(float _delteTime)
 	if (m_pPlayerChara->GetIsUesAbility())
 	{
 		BeginMovement(m_pPlayerChara);
+		colader();
 	}
 	else
 	{
@@ -143,7 +160,8 @@ void AStone::BeginMovement(AMainCharacter* _maincharactor)
 
 	//プレイヤーにアタッチする
 	this->AttachToActor(_maincharactor, AttachmentRules);
-	m_pBoxComp->SetActive(false);
+	SpriteComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	
 }
 
 // アビリティ終了された時の関数
@@ -158,7 +176,8 @@ void AStone::EndMovement(AMainCharacter* _maincharactor)
 	);
 
 	this->DetachFromActor(DetachRules);
-	m_pBoxComp->SetActive(true);
+	SpriteComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	m_pPlayerChara->SetMove(false);
 }
 
 
@@ -168,4 +187,39 @@ void AStone::Coulbauk(const FString & Message)
 	UE_LOG(LogTemp, Log, TEXT("UI表示: %s"), *Message);
 
 	BeginMovement(m_pPlayerChara);
+}
+
+void AStone::colader()
+{
+    //レイを飛ばす
+    //レイの始点はActorの位置
+    FVector Start = GetActorLocation();
+    //レイの終点はActorから前方向の一定距離
+    FVector End = GetActorLocation() + 100 * 1.5;
+
+    //デバッグ確認用のラインを描画
+    //DrawDebugLine(GetWorld(),Start,End,FColor::Green,false,1.0f);
+
+    //コリジョン判定で無視する項目を指定（今回はこのActor自分自身。thisポインタで指定）
+    FCollisionQueryParams CollisionParams;
+    CollisionParams.AddIgnoredActor(this);
+
+    //ヒットした（＝コリジョン判定を受けた）オブジェクトを格納する変数
+    FHitResult OutHit;
+
+    //レイを飛ばし、全てのオブジェクトに対してコリジョン判定を行う
+    //isHitは、ヒットした場合にtrueになる
+    bool isHit = GetWorld()->LineTraceSingleByChannel(OutHit, Start, End,
+	   ECC_WorldStatic, CollisionParams);
+
+    //ヒットするオブジェクトがある場合
+    if (isHit)
+    {
+	   UE_LOG(LogTemp, Warning, TEXT("OnWool"));
+	   m_pPlayerChara->SetMove(true);
+    }
+	else
+	{
+		m_pPlayerChara->SetMove(false);
+	}
 }
