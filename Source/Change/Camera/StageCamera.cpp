@@ -1,4 +1,4 @@
-ï»¿#include "StageCamera.h"
+#include "StageCamera.h"
 
 #include "Camera/CameraComponent.h"
 #include "GameFramework/PlayerController.h"
@@ -7,7 +7,7 @@
 
 #include "Change/Room/RoomBase.h"
 
-// ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
+// ƒRƒ“ƒXƒgƒ‰ƒNƒ^
 AStageCamera::AStageCamera()
 {
     PrimaryActorTick.bCanEverTick = true;
@@ -20,7 +20,7 @@ AStageCamera::AStageCamera()
     Camera->OrthoWidth = 300.0f;
 }
 
-// ã‚²ãƒ¼ãƒ é–‹å§‹æ™‚ã¾ãŸã¯ç”Ÿæˆã•ã‚ŒãŸæ™‚ã®å‡¦ç†
+// ƒQ[ƒ€ŠJn‚Ü‚½‚Í¶¬‚³‚ê‚½‚Ìˆ—
 void AStageCamera::BeginPlay()
 {
     Super::BeginPlay();
@@ -32,13 +32,13 @@ void AStageCamera::BeginPlay()
     }
 }
 
-// ãƒ•ã‚¡ãƒ­ãƒ¼ã™ã‚‹å¯¾è±¡ã‚’è¨­å®šã™ã‚‹
+// ƒtƒ@ƒ[‚·‚é‘ÎÛ‚ğİ’è‚·‚é
 void AStageCamera::SetFollowTarget(AActor* NewTarget)
 {
     Target = NewTarget;
 }
 
-// ãƒ«ãƒ¼ãƒ ã‚’è¨­å®šã™ã‚‹
+// ƒ‹[ƒ€‚ğİ’è‚·‚é
 void AStageCamera::SetRoom(ARoomBase* NewRoom)
 {
     CurrentRoom = NewRoom;
@@ -52,7 +52,7 @@ void AStageCamera::Tick(float DeltaTime)
 
 }
 
-// ã‚«ãƒ¡ãƒ©ä½ç½®ã®æ›´æ–°å‡¦ç†
+// ƒJƒƒ‰ˆÊ’u‚ÌXVˆ—
 void AStageCamera::UpdateCameraPosition(float DeltaTime)
 {
     if (!Target || !CurrentRoom)
@@ -73,10 +73,10 @@ void AStageCamera::UpdateCameraPosition(float DeltaTime)
     SetActorLocation(NewLocation);
 }
 
-// ã‚¯ãƒ©ãƒ³ãƒ—ã•ã‚ŒãŸã‚«ãƒ¡ãƒ©ä½ç½®ã‚’å–å¾—ã™ã‚‹
+// ƒNƒ‰ƒ“ƒv‚³‚ê‚½ƒJƒƒ‰ˆÊ’u‚ğæ“¾‚·‚é
 FVector AStageCamera::GetClampedPosition(const FVector& Location) const
 {
-    // æˆ»ã‚Šå€¤
+    // –ß‚è’l
     FVector ReturnVector = Location;
 
     if (!CurrentRoom || !Camera)
@@ -84,17 +84,17 @@ FVector AStageCamera::GetClampedPosition(const FVector& Location) const
         return ReturnVector;
     }
 
-    // ãƒ«ãƒ¼ãƒ ã®ã‚¿ã‚¤ãƒ«ãƒãƒƒãƒ—ã®ãƒã‚¦ãƒ³ãƒ‰
+    // ƒ‹[ƒ€‚Ìƒ^ƒCƒ‹ƒ}ƒbƒv‚ÌƒoƒEƒ“ƒh
     const FBox Bounds = CurrentRoom->GetTilemapBounds();
 
     if (!Bounds.IsValid)
     {
-        return;
+        return ReturnVector;
     }
 
     
 
-    // ã‚¢ã‚¹ãƒšã‚¯ãƒˆæ¯”
+    // ƒAƒXƒyƒNƒg”ä
     float AspectRatio = 16.0f / 9.0f;
 
     if (GEngine && GEngine->GameViewport)
@@ -109,9 +109,9 @@ FVector AStageCamera::GetClampedPosition(const FVector& Location) const
         }
     }
 
-    // å¯è¦–ç¯„å›²ã®åºƒã•ã®åŠåˆ†
+    // ‰Â‹”ÍˆÍ‚ÌL‚³‚Ì”¼•ª
     float HalfViewportWidth = Camera->OrthoWidth * 0.5f;
-    // å¯è¦–ç¯„å›²ã®é«˜ã•ã®åŠåˆ†
+    // ‰Â‹”ÍˆÍ‚Ì‚‚³‚Ì”¼•ª
     float HalfViewporHeight = HalfViewportWidth / AspectRatio;
 
 
@@ -121,7 +121,7 @@ FVector AStageCamera::GetClampedPosition(const FVector& Location) const
     const float MinZ = Bounds.Min.Z;
     const float MaxZ = Bounds.Max.Z;
 
-    // Xè»¸èª¿æ•´
+    // X²’²®
     if (MaxX - MinX <= HalfViewportWidth * 2.0f)
     {
         ReturnVector.X = (MinX + MaxX) * 0.5f;
@@ -135,7 +135,7 @@ FVector AStageCamera::GetClampedPosition(const FVector& Location) const
         );
     }
 
-    // Zè»¸èª¿æ•´
+    // Z²’²®
     if (MaxZ - MinZ <= HalfViewporHeight * 2.0f)
     {
         ReturnVector.Z = (MinZ + MaxZ) * 0.5f;
