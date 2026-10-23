@@ -15,6 +15,7 @@
 // アニメション関連クラス
 class UPaperZDAnimInstance;
 class UPaperZDAnimationComponent;
+class UPaperSpriteComponent;
 
 UCLASS()
 class CHANGE_API AMainCharacter : public ACharacter
@@ -43,6 +44,9 @@ public:
 	// 猪に変身したときの処理
 	void UpdateTransformBoar();
 
+	// 兎に変身したときの処理
+	void UpdateTransformRabbit();
+
 	// 変身状態を解除するときの処理
 	void UpdateTransformCancel();
 
@@ -51,6 +55,13 @@ public:
 	// プレイヤーの向きを更新する
 	void UpdateDirection(const FVector2f& MovementVector);
 
+	// 兎のアビリティ使用時の処理
+	void UpdateRabbitUbility();
+
+	//ジャンプ処理
+	void UpdateJump(float Deltatime);
+
+	FVector Jump(FVector p1, FVector p2, FVector p3, float t);
 
 public:
 	// アニメションをコントロールするコンポネント
@@ -64,6 +75,10 @@ public:
 	// 猪のアニメションインスタンス
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
 	TSubclassOf<UPaperZDAnimInstance> AS_Boar;
+
+	// 兎のアニメションインスタンス
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
+	TSubclassOf<UPaperZDAnimInstance> AS_Ribbit;
 
 private:
 	// プレイヤーの状態
@@ -85,6 +100,8 @@ private:
 
 	UPROPERTY()
 	AActor* m_pLiftObject;					//持ち上げているオブジェクト情報
+	UPROPERTY()
+	float Alpha;
 
 public:
 	// 現在の変身状態を返す
@@ -93,12 +110,17 @@ public:
 	// 現在の変身状態を返す
 	EPlayerState GetPlayertate() { return PlayerState; }
 
+	UPROPERTY()
+	TObjectPtr<UPaperSpriteComponent> SpriteComponent;
 
 	void SetCanuesAbility(bool b_flg) { CanuesAbility = b_flg; }
 
 	bool GetIsUesAbility() { return m_bUesingAbility; }
 
-	void SetMove(bool _floa) { _floa = StopMove; }
+	void SetMove(bool _floa) { 
+		_floa = StopMove;
+		UE_LOG(LogTemp, Warning, TEXT("Stop"));
+	}
 	bool GetMove() { return StopMove; }
 private:
 	
@@ -110,6 +132,8 @@ private:
 	// アビリティを使用時のレイキャスト処理
 	void UpdateUesAbilityLine();
 
+	FVector SetForwardVector(EPlayerDirection _playerdirection);
+
 private:
 	//アビリティ使用状態フラグ
 
@@ -118,4 +142,13 @@ private:
 	bool StopMove;
 
 	EPlayerState PlayerState;
+
+	FVector ForwardVector;
+	FVector m_posBeforeJump;
+	float m_jumpTime;
+	bool m_bJumping;
+	float m_nowJumpHeight;
+	FVector Start_Jump;
+	FVector Controlpoint_Jump;
+	FVector End_Jump;
 };

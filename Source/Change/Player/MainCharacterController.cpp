@@ -120,11 +120,6 @@ void AMainCharacterController::OnIA_PlayerMove(const FInputActionValue& InputVal
 		InputValue.Get<FVector>().Y
 	);
 
-	if (MainCharacter->GetMove())
-	{
-	    return;
-	}
-
 	// 移動の更新処理
 	MainCharacter->UpdateMovement(MovementVector);
 
@@ -144,7 +139,7 @@ void AMainCharacterController::OnIA_TransformBoar()
 // 兎に変身するボタンが押されたら呼び出される関数
 void AMainCharacterController::OnIA_TransformRabbit()
 {
-
+	MainCharacter->UpdateTransformRabbit();
 }
 
 // 変身を解除するボタンが押されたら呼び出される関数

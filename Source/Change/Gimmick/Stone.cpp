@@ -90,6 +90,7 @@ void AStone::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherAc
 				SetUseAbility(true);
 				//デバッグ確認用
 				UE_LOG(LogTemp, Warning, TEXT("OnOverlapBegin"));
+				m_pPlayerChara->SetMove(true);
 			}
 
 		}
@@ -122,6 +123,7 @@ void AStone::SetMovement(float _delteTime)
 	if (m_pPlayerChara->GetIsUesAbility())
 	{
 		BeginMovement(m_pPlayerChara);
+		colader();
 	}
 	else
 	{
@@ -159,7 +161,7 @@ void AStone::BeginMovement(AMainCharacter* _maincharactor)
 	//プレイヤーにアタッチする
 	this->AttachToActor(_maincharactor, AttachmentRules);
 	SpriteComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	colader();
+	
 }
 
 // アビリティ終了された時の関数
@@ -193,7 +195,7 @@ void AStone::colader()
     //レイの始点はActorの位置
     FVector Start = GetActorLocation();
     //レイの終点はActorから前方向の一定距離
-    FVector End = GetActorLocation() + 50 * 1.5;
+    FVector End = GetActorLocation() + 100 * 1.5;
 
     //デバッグ確認用のラインを描画
     //DrawDebugLine(GetWorld(),Start,End,FColor::Green,false,1.0f);
@@ -216,4 +218,8 @@ void AStone::colader()
 	   UE_LOG(LogTemp, Warning, TEXT("OnWool"));
 	   m_pPlayerChara->SetMove(true);
     }
+	else
+	{
+		m_pPlayerChara->SetMove(false);
+	}
 }
