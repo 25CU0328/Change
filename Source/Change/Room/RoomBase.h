@@ -8,6 +8,7 @@
 
 #include "RoomStart.h"
 #include "RoomGoal.h"
+#include "PaperTileMapComponent.h"
 
 #include "RoomBase.generated.h"
 
@@ -34,10 +35,17 @@ public:
 	// 出発点を取得する
 	FVector GetStartLocation();
 	
+	// タイルマップのバウンディングを取得する
+	FBox GetTilemapBounds() const;
+
 protected:
 	// ルームを管理するマネージャー
 	UPROPERTY()
 	TObjectPtr<ARoomManager> RoomManager;
+
+	// ルームのタイルマップ
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Room")
+	TObjectPtr<UPaperTileMapComponent> Tilemap;
 
 	// ルームの出発点
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Anchor", meta = (AllowPrivateAccess = "true"))

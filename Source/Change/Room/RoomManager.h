@@ -1,65 +1,67 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "RoomArrayData.h"
+#include "Change/Camera/StageCamera.h"
 #include "RoomManager.generated.h"
 
-// ƒ‹[ƒ€‚Ìƒx[ƒXƒNƒ‰ƒX‚Ì‘O•ûéŒ¾
+// ãƒ«ãƒ¼ãƒ ã®ãƒ™ãƒ¼ã‚¹ã‚¯ãƒ©ã‚¹ã®å‰æ–¹å®£è¨€
 class ARoomBase;
 class AMainCharacter;
 
-// ƒ‹[ƒ€‚ğŠÇ—‚·‚éƒ}ƒl[ƒWƒƒ[
+// ãƒ«ãƒ¼ãƒ ã‚’ç®¡ç†ã™ã‚‹ãƒãƒãƒ¼ã‚¸ãƒ£ãƒ¼
 UCLASS()
 class CHANGE_API ARoomManager : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
-	// ƒRƒ“ƒXƒgƒ‰ƒNƒ^[
+	// ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ãƒ¼
 	ARoomManager();
 
-	// ƒvƒŒƒCƒ„[‚ğæ“¾‚·‚é
+	// ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã‚’å–å¾—ã™ã‚‹
 	AMainCharacter* GetPlayer();
 protected:
-	// ƒQ[ƒ€ŠJn‚Ìˆ—
+	// ã‚²ãƒ¼ãƒ é–‹å§‹æ™‚ã®å‡¦ç†
 	virtual void BeginPlay() override;
 
 public:
-	// FRoomArrayData‚ğŠÇ—‚·‚é”z—ñ
+	// FRoomArrayDataã‚’ç®¡ç†ã™ã‚‹é…åˆ—
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Room")
 	TArray<FRoomArrayData> RoomArrayDatas;
 
 private:
-	// ƒ‹[ƒ€”Ô†‚ğ•\‚·•Ï”
+	// ãƒ«ãƒ¼ãƒ ç•ªå·ã‚’è¡¨ã™å¤‰æ•°
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Room", meta = (AllowPrivateAccess = "true"))
-	// ƒf[ƒ^‚Ì”Ô†
+	// ãƒ‡ãƒ¼ã‚¿ã®ç•ªå·
 	int CurrentDataIndex = 0;
-	// ƒf[ƒ^“à‚Ì”z—ñ”Ô†
+	// ãƒ‡ãƒ¼ã‚¿å†…ã®é…åˆ—ç•ªå·
 	int CurrentDataArrayIndex = 0;
 private:
-	// Œ»İƒ‹[ƒ€
+	// ç¾åœ¨ãƒ«ãƒ¼ãƒ 
 	TObjectPtr<ARoomBase> CurrentRoom;
-	// ƒvƒŒƒCƒ„[
+	// ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼
 	TObjectPtr<AMainCharacter> Player;
-
+	// ã‚¹ãƒ†ãƒ¼ã‚¸å†…ã‚«ãƒ¡ãƒ©
+	TObjectPtr<AStageCamera> StageCamera;
 	// --------------
-	// ƒR[ƒ‹ƒoƒbƒNŠÖ”
+	// ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯é–¢æ•°
 	// --------------
 private:
-	// ƒ‹[ƒ€‚ªƒNƒŠƒA‚³‚ê‚½ŒÄ‚Ño‚³‚ê‚éƒƒ\ƒbƒh
+	// ãƒ«ãƒ¼ãƒ ãŒã‚¯ãƒªã‚¢ã•ã‚ŒãŸæ™‚å‘¼ã³å‡ºã•ã‚Œã‚‹ãƒ¡ã‚½ãƒƒãƒ‰
 	void OnRoomCleared(const FString& EventMessage);
-	// ƒ‹[ƒ€‚ğƒŠƒZƒbƒg‚µ‚½‚¢ŒÄ‚Ño‚³‚ê‚½ƒƒ\ƒbƒh
+	// ãƒ«ãƒ¼ãƒ ã‚’ãƒªã‚»ãƒƒãƒˆã—ãŸã„æ™‚å‘¼ã³å‡ºã•ã‚ŒãŸãƒ¡ã‚½ãƒƒãƒ‰
 	void OnResetRoom(const FString& EventMessage);
-	// ƒ‹[ƒ€‚ª‘S•”ƒNƒŠƒA‚³‚ê‚½‚©
+	// ãƒ«ãƒ¼ãƒ ãŒå…¨éƒ¨ã‚¯ãƒªã‚¢ã•ã‚ŒãŸã‹
 	bool IsAllRoomCleared();
 
 private:
-	// ƒ‹[ƒ€‚ğ¶¬‚·‚é
+	// ãƒ«ãƒ¼ãƒ ã‚’ç”Ÿæˆã™ã‚‹
 	void GenerateRoom();
-	// Œ»İƒ‹[ƒ€‚ğíœ‚·‚é
+	// ç¾åœ¨ãƒ«ãƒ¼ãƒ ã‚’å‰Šé™¤ã™ã‚‹
 	void RemoveCurrentRoom();
 
 	
