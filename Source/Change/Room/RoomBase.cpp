@@ -21,6 +21,7 @@ void ARoomBase::BeginPlay()
 {
 	Super::BeginPlay();
 
+	Tilemap = GetComponentByClass<UPaperTileMapComponent>();
 }
 
 // ゲーム終了時処理
@@ -33,4 +34,10 @@ void ARoomBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 FVector ARoomBase::GetStartLocation()
 {
 	return StartPointComponent->GetComponentLocation();
+}
+
+// タイルマップのバウンディングを取得する
+FBox ARoomBase::GetTilemapBounds() const
+{
+	return Tilemap->Bounds.GetBox();
 }
