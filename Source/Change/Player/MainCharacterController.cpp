@@ -119,11 +119,15 @@ void AMainCharacterController::OnIA_PlayerMove(const FInputActionValue& InputVal
 		InputValue.Get<FVector>().X,
 		InputValue.Get<FVector>().Y
 	);
+
 	// 移動の更新処理
 	MainCharacter->UpdateMovement(MovementVector);
 
 	// 向きの更新処理
-	MainCharacter->UpdateDirection(MovementVector);
+	if (!MainCharacter->GetIsUesAbility())
+	{
+	    MainCharacter->UpdateDirection(MovementVector);
+	}
 }
 
 // 猪に変身するボタンが押されたら呼び出される関数
@@ -135,7 +139,7 @@ void AMainCharacterController::OnIA_TransformBoar()
 // 兎に変身するボタンが押されたら呼び出される関数
 void AMainCharacterController::OnIA_TransformRabbit()
 {
-
+	MainCharacter->UpdateTransformRabbit();
 }
 
 // 変身を解除するボタンが押されたら呼び出される関数

@@ -16,12 +16,24 @@
 
 // UCharacterMovementComponent を使うためのヘッダー
 #include "GameFramework/CharacterMovementComponent.h" 
+#include "PaperSpriteComponent.h"
+#include "PaperSprite.h"
+
+#define JUMP_HEIGHT (m_jumpTime * m_jumpTime * ( -980.f) / 2 ) + ( m_jumpTime * 450.f )
 
 // Sets default values
 AMainCharacter::AMainCharacter()
 	:m_bUesingAbility(false)
-	, CanuesAbility(false)
-	
+	,CanuesAbility(false)
+    ,StopMove(false)
+	,ForwardVector(0,0,0)
+	, m_posBeforeJump(0, 0, 0)
+	,m_jumpTime(0.f)
+	,m_bJumping(false)
+	,m_nowJumpHeight(0.f)
+	,Start_Jump(0,0,0)
+	,Controlpoint_Jump(0, 0, 0)
+	,End_Jump(0, 0, 0)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -63,6 +75,7 @@ void AMainCharacter::BeginPlay()
 
 	//　変身の状態を人間に初期化
 	TransformState = ETransformState::Human;
+	SpriteComponent = FindComponentByClass<UPaperSpriteComponent>();
 }
 
 // Called every frame
@@ -72,6 +85,8 @@ void AMainCharacter::Tick(float DeltaTime)
 
 	// 状態の更新
 	UpdatePlayerState();
+
+	UpdateJump(DeltaTime);
 }
 
 // Called to bind functionality to input
@@ -90,6 +105,11 @@ void AMainCharacter::UpdateMovement(const FVector2f& MovementVector)
 		return;
 	}
 
+	if (StopMove)
+	{
+		return;
+	}
+
 	if (MovementVector.X != 0.0f)
 	{
 		if (MovementComponent->Velocity.Z != 0.0f)
@@ -97,8 +117,30 @@ void AMainCharacter::UpdateMovement(const FVector2f& MovementVector)
 			// 移動を停止）
 			MovementComponent->StopMovementImmediately();
 		}
-
 		// キャラクターの右方向に移動する
+		if (m_bUesingAbility)
+		{
+		    if (PlayerDirection == EPlayerDirection::Up || PlayerDirection == EPlayerDirection::Down)
+		    {
+			   return;
+		    }
+		    else if (PlayerDirection == EPlayerDirection::Right)
+		    {
+			   if (MovementVector.X < 0.0f)
+			   {
+				  return;
+			   }
+		    }
+		    else if (PlayerDirection == EPlayerDirection::Left)
+		    {
+			   if (MovementVector.X >= 0.0f)
+			   {
+				  return;
+			   }
+		    }
+		}
+
+		
 		AddMovementInput(FVector(1, 0, 0), MovementVector.X);
 	}
 	else if (MovementVector.Y != 0.0f)
@@ -107,6 +149,29 @@ void AMainCharacter::UpdateMovement(const FVector2f& MovementVector)
 		{
 			// 移動を停止）
 			MovementComponent->StopMovementImmediately();
+		}
+
+		// キャラクターの右方向に移動する
+		if (m_bUesingAbility)
+		{
+		    if (PlayerDirection == EPlayerDirection::Right|| PlayerDirection == EPlayerDirection::Left)
+		    {
+			   return;
+		    }
+		    else if (PlayerDirection == EPlayerDirection::Down)
+		    {
+			   if (MovementVector.Y > 0.0f)
+			   {
+				  return;
+			   }
+		    }
+		    else if (PlayerDirection == EPlayerDirection::Up)
+		    {
+			   if (MovementVector.Y <= 0.0f)
+			   {
+				  return;
+			   }
+		    }
 		}
 
 		// キャラクターの前方向に移動する
@@ -118,6 +183,12 @@ void AMainCharacter::UpdateMovement(const FVector2f& MovementVector)
 // プレイヤーの向きを更新する
 void AMainCharacter::UpdateDirection(const FVector2f& MovementVector)
 {
+
+	if (StopMove)
+	{
+		return;
+	}
+
 	// 水平方向の入力を優先する
 	if (FMath::Abs(MovementVector.X) != 0.0f)
 	{
@@ -186,7 +257,18 @@ void AMainCharacter::ApplyCharacterFormData()
 // 猪に変身したときの処理
 void AMainCharacter::UpdateTransformBoar()
 {
+	if (m_bJumping)return;
 	TransformState = ETransformState::Boar;
+
+	// 変身後のデータを適用する
+	ApplyCharacterFormData();
+}
+
+// 兎に変身したときの処理
+void AMainCharacter::UpdateTransformRabbit()
+{
+	if (m_bJumping)return;
+	TransformState = ETransformState::Rabbit;
 
 	// 変身後のデータを適用する
 	ApplyCharacterFormData();
@@ -195,6 +277,7 @@ void AMainCharacter::UpdateTransformBoar()
 // 変身状態を解除するときの処理
 void AMainCharacter::UpdateTransformCancel()
 {
+	if (m_bJumping)return;
 	TransformState = ETransformState::Human;
 
 	// 変身後のデータを適用する
@@ -204,6 +287,11 @@ void AMainCharacter::UpdateTransformCancel()
 // 能力を使う時の処理
 void AMainCharacter::UpdateUseAbility()
 {
+	if (TransformState == ETransformState::Rabbit)
+	{
+		UpdateRabbitUbility();
+	}
+
 	if (!CanuesAbility) {
 		//デバッグ確認用
 		UE_LOG(LogTemp, Warning, TEXT("PLAYER not Ablity"));
@@ -219,4 +307,133 @@ void AMainCharacter::UpdateUseAbility()
 		m_bUesingAbility = false;
 
 	}
+}
+
+// 兎のアビリティ使用時の処理
+void AMainCharacter::UpdateRabbitUbility()
+{
+	USkeletalMeshComponent* pMeshComp = GetMesh();
+	if (pMeshComp != NULL)
+	{
+		ForwardVector = SetForwardVector(PlayerDirection);
+
+		//レイを飛ばす
+		//レイの始点はActorの位置
+		FVector Start = GetActorLocation();
+		//レイの終点はActorから前方向の一定距離
+		FVector End = GetActorLocation() + ForwardVector * 50.f;
+
+		//デバッグ確認用のラインを描画
+		DrawDebugLine(GetWorld(),Start,End,FColor::Green,false,5.0f);
+
+		End.Y = Start.Y;
+
+		//コリジョン判定で無視する項目を指定（今回はこのActor自分自身。thisポインタで指定）
+		FCollisionQueryParams CollisionParams;
+		CollisionParams.AddIgnoredActor(this);
+
+		//ヒットした（＝コリジョン判定を受けた）オブジェクトを格納する変数
+		FHitResult OutHit;
+
+		//レイを飛ばし、全てのオブジェクトに対してコリジョン判定を行う
+		//isHitは、ヒットした場合にtrueになる
+		bool isHit = GetWorld()->LineTraceSingleByChannel(OutHit, Start, End,
+			ECC_WorldStatic, CollisionParams);
+
+		//ヒットするオブジェクトがある場合
+		if (isHit)
+		{
+			//今ヒットしたActorが、持ち上げられるオブジェクトActorの場合
+			if (OutHit.GetActor()->ActorHasTag("Stone"))
+			{
+				if (OutHit.bBlockingHit)
+				{
+					UPaperSpriteComponent*  HitBoxComp = Cast<UPaperSpriteComponent>(OutHit.GetComponent());
+					
+					if (HitBoxComp)
+					{
+						UE_LOG(LogTemp, Warning, TEXT("Rabbit Ablity"));
+						//UPaperSprite* Sprite = HitBoxComp->GetSprite();
+						//FVector2D HitBox_Size = Sprite->GetSourceSize();
+						//FVector Ends = FVector(HitBox_Size.X, 0, HitBox_Size.Y);
+						ForwardVector = SetForwardVector(PlayerDirection);
+						Start_Jump = GetActorLocation();
+						End_Jump = GetActorLocation() + 90 * ForwardVector;
+						Controlpoint_Jump = FVector((Start_Jump.X + End_Jump.X) / 2,
+							((Start_Jump.Y + End_Jump.Y) / 2) + 10.f
+							, (Start_Jump.Z + End_Jump.Z) / 2) * ForwardVector * 0.5;
+						m_bJumping = true;
+						Alpha = 0.f;
+					}
+					else
+					{
+						UE_LOG(LogTemp, Warning, TEXT("Not find"));
+					}
+				}
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("not Stone"));
+			}
+			
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Rabbut not Ablity"));
+		}
+	}
+}
+
+FVector AMainCharacter::SetForwardVector(EPlayerDirection _playerdirection)
+{
+	FVector vector(0, 0, 0);
+	switch (_playerdirection)
+	{
+	case EPlayerDirection::Up:
+		vector = FVector(0, 0, 1);
+		break;
+	case EPlayerDirection::Down:
+		vector = FVector(0, 0, -1);
+		break;
+	case EPlayerDirection::Right:
+		vector = FVector(1, 0, 0);
+		break;
+	case EPlayerDirection::Left:
+		vector = FVector(-1, 0, 0);
+		break;
+	}
+
+	return vector;
+}
+
+//ジャンプ処理
+void AMainCharacter::UpdateJump(float Deltatime)
+{
+	if (m_bJumping) 
+	{
+		//ジャンプ量を計算
+		m_nowJumpHeight = JUMP_HEIGHT;
+		
+		Alpha += Deltatime;
+		float T = FMath::Clamp(Alpha * 0.9f, 0.0f, 1.0f);
+		FVector NewLocation = Jump(Start_Jump, Controlpoint_Jump, End_Jump, T);
+		SetActorLocation(NewLocation);
+
+		
+		
+		if (T == 1.f)
+		{
+			m_bJumping = false;
+			Alpha = 0.f;
+		}
+	}
+}
+
+FVector AMainCharacter::Jump(FVector p1, FVector p2, FVector p3, float t)
+{
+	t = FMath::Clamp(t, 0.0f, 1.0f);
+
+	FVector A = FMath::Lerp(p1, p2, t);
+	FVector B = FMath::Lerp(p2, p3, t);
+	return FMath::Lerp(A, B, t);
 }
