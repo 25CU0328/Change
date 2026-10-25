@@ -82,6 +82,15 @@ AMainCharacter* ARoomManager::GetPlayer()
 // ルームがクリアされた時呼び出される関数
 void ARoomManager::OnRoomCleared(const FString& EventMessage)
 {
+   
+	// 現在ルームを削除
+	RemoveCurrentRoom();
+
+    // ルーム配列の番号を1増やす
+	CurrentDataIndex += 1;
+
+    // ルームが全てクリアされたかを判定
+    // そうだったらステージクリアイベントを送る
     if (IsAllRoomCleared())
     {
         auto* EventSubsystem = GetGameInstance()->GetSubsystem<UGameEventSubsystem>();
@@ -97,14 +106,9 @@ void ARoomManager::OnRoomCleared(const FString& EventMessage)
         return;
     }
 
-	// 現在ルームを削除
-	RemoveCurrentRoom();
-
-    // ルーム配列の番号を1増やす
-	CurrentDataIndex += 1;
     // データ内のルーム番号を取得する
     CurrentDataArrayIndex = FMath::RandRange(0, RoomArrayDatas[CurrentDataIndex].Rooms.Num() - 1);
-
+    
     // 新しいルームを生成する
 	GenerateRoom();
 }
@@ -193,6 +197,10 @@ void ARoomManager::GenerateRoom()
 
     // カメラが参照しているルームを設定する
     StageCamera->SetRoom(CurrentRoom);
+
+    auto EventManager = GetGameInstance()->GetSubsystem<UGameEventSubsystem>();
+
+    EventManager->SendEvent(EGameEvent::RoomCreated, "");
 }
 
 // 現在ルームを削除する
