@@ -105,13 +105,18 @@ void AStone::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActo
 	{
 		if (OtherActor->ActorHasTag("Player"))
 		{
+			if (!m_pPlayerChara) {
+				m_pPlayerChara = Cast<AMainCharacter>(OtherActor);
+			}
 
+			if (!m_pPlayerChara)
+			{
+				return;
+			}
 			m_pPlayerChara->SetCanuesAbility(false);
 			SetUseAbility(false);
 			//デバッグ確認用
 			UE_LOG(LogTemp, Warning, TEXT("OnOverlapEnd"));
-
-			
 		}
 	}
 }
@@ -119,6 +124,10 @@ void AStone::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActo
 //移動値を加算
 void AStone::SetMovement(float _delteTime)
 {
+	if (!m_pPlayerChara)
+	{
+		return;
+	}
 
 	if (m_pPlayerChara->GetIsUesAbility())
 	{

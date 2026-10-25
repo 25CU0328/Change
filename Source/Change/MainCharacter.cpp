@@ -24,18 +24,18 @@
 // Sets default values
 AMainCharacter::AMainCharacter()
 	:m_bUesingAbility(false)
-	,CanuesAbility(false)
-    ,StopMove(false)
-	,ForwardVector(0,0,0)
+	, CanuesAbility(false)
+	, StopMove(false)
+	, ForwardVector(0, 0, 0)
 	, m_posBeforeJump(0, 0, 0)
-	,m_jumpTime(0.f)
-	,m_bJumping(false)
-	,m_nowJumpHeight(0.f)
-	,Start_Jump(0,0,0)
-	,Controlpoint_Jump(0, 0, 0)
-	,End_Jump(0, 0, 0)
+	, m_jumpTime(0.f)
+	, m_bJumping(false)
+	, m_nowJumpHeight(0.f)
+	, Start_Jump(0, 0, 0)
+	, Controlpoint_Jump(0, 0, 0)
+	, End_Jump(0, 0, 0)
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 }
 
@@ -49,14 +49,14 @@ AMainCharacter::~AMainCharacter()
 void AMainCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
-    // プレイヤーコントローラーにキャストできないなら処理しない
-	auto* playerController = Cast<AMainCharacterController>(Controller);
-    if (!playerController)
-        return;
 
-    // 入力を有効にする
-    EnableInput(playerController);
+	// プレイヤーコントローラーにキャストできないなら処理しない
+	auto* playerController = Cast<AMainCharacterController>(Controller);
+	if (!playerController)
+		return;
+
+	// 入力を有効にする
+	EnableInput(playerController);
 
 	// 移動処理を行うためのコンポーネントを取得する
 	MovementComponent = GetCharacterMovement();
@@ -120,27 +120,27 @@ void AMainCharacter::UpdateMovement(const FVector2f& MovementVector)
 		// キャラクターの右方向に移動する
 		if (m_bUesingAbility)
 		{
-		    if (PlayerDirection == EPlayerDirection::Up || PlayerDirection == EPlayerDirection::Down)
-		    {
-			   return;
-		    }
-		    else if (PlayerDirection == EPlayerDirection::Right)
-		    {
-			   if (MovementVector.X < 0.0f)
-			   {
-				  return;
-			   }
-		    }
-		    else if (PlayerDirection == EPlayerDirection::Left)
-		    {
-			   if (MovementVector.X >= 0.0f)
-			   {
-				  return;
-			   }
-		    }
+			if (PlayerDirection == EPlayerDirection::Up || PlayerDirection == EPlayerDirection::Down)
+			{
+				return;
+			}
+			else if (PlayerDirection == EPlayerDirection::Right)
+			{
+				if (MovementVector.X < 0.0f)
+				{
+					return;
+				}
+			}
+			else if (PlayerDirection == EPlayerDirection::Left)
+			{
+				if (MovementVector.X >= 0.0f)
+				{
+					return;
+				}
+			}
 		}
 
-		
+
 		AddMovementInput(FVector(1, 0, 0), MovementVector.X);
 	}
 	else if (MovementVector.Y != 0.0f)
@@ -154,24 +154,24 @@ void AMainCharacter::UpdateMovement(const FVector2f& MovementVector)
 		// キャラクターの右方向に移動する
 		if (m_bUesingAbility)
 		{
-		    if (PlayerDirection == EPlayerDirection::Right|| PlayerDirection == EPlayerDirection::Left)
-		    {
-			   return;
-		    }
-		    else if (PlayerDirection == EPlayerDirection::Down)
-		    {
-			   if (MovementVector.Y > 0.0f)
-			   {
-				  return;
-			   }
-		    }
-		    else if (PlayerDirection == EPlayerDirection::Up)
-		    {
-			   if (MovementVector.Y <= 0.0f)
-			   {
-				  return;
-			   }
-		    }
+			if (PlayerDirection == EPlayerDirection::Right || PlayerDirection == EPlayerDirection::Left)
+			{
+				return;
+			}
+			else if (PlayerDirection == EPlayerDirection::Down)
+			{
+				if (MovementVector.Y > 0.0f)
+				{
+					return;
+				}
+			}
+			else if (PlayerDirection == EPlayerDirection::Up)
+			{
+				if (MovementVector.Y <= 0.0f)
+				{
+					return;
+				}
+			}
 		}
 
 		// キャラクターの前方向に移動する
@@ -201,7 +201,7 @@ void AMainCharacter::UpdateDirection(const FVector2f& MovementVector)
 			PlayerDirection = EPlayerDirection::Left;
 		}
 	}
-	else 
+	else
 	{
 		if (MovementVector.Y > 0.0f)
 		{
@@ -220,7 +220,7 @@ void AMainCharacter::UpdatePlayerState()
 	// 移動中かどうかで状態を更新する
 	if (!FMath::IsNearlyZero(MovementComponent->Velocity.X) ||
 		!FMath::IsNearlyZero(MovementComponent->Velocity.Z)
-	)
+		)
 	{
 		CurrentPlayerState = EPlayerState::Move;
 	}
@@ -324,7 +324,7 @@ void AMainCharacter::UpdateRabbitUbility()
 		FVector End = GetActorLocation() + ForwardVector * 50.f;
 
 		//デバッグ確認用のラインを描画
-		DrawDebugLine(GetWorld(),Start,End,FColor::Green,false,5.0f);
+		// DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 5.0f);
 
 		End.Y = Start.Y;
 
@@ -343,39 +343,59 @@ void AMainCharacter::UpdateRabbitUbility()
 		//ヒットするオブジェクトがある場合
 		if (isHit)
 		{
-			//今ヒットしたActorが、持ち上げられるオブジェクトActorの場合
-			if (OutHit.GetActor()->ActorHasTag("Stone"))
+			//今ヒットしたActorが、ギミックオブジェクトActorの場合
+			if (OutHit.GetActor()->ActorHasTag("Stone") || OutHit.GetActor()->ActorHasTag("Mizo"))
 			{
-				if (OutHit.bBlockingHit)
+				UPaperSpriteComponent* HitBoxComp = Cast<UPaperSpriteComponent>(OutHit.GetComponent());
+
+				if (HitBoxComp)
 				{
-					UPaperSpriteComponent*  HitBoxComp = Cast<UPaperSpriteComponent>(OutHit.GetComponent());
-					
-					if (HitBoxComp)
-					{
-						UE_LOG(LogTemp, Warning, TEXT("Rabbit Ablity"));
-						//UPaperSprite* Sprite = HitBoxComp->GetSprite();
-						//FVector2D HitBox_Size = Sprite->GetSourceSize();
-						//FVector Ends = FVector(HitBox_Size.X, 0, HitBox_Size.Y);
-						ForwardVector = SetForwardVector(PlayerDirection);
-						Start_Jump = GetActorLocation();
-						End_Jump = GetActorLocation() + 90 * ForwardVector;
-						Controlpoint_Jump = FVector((Start_Jump.X + End_Jump.X) / 2,
-							((Start_Jump.Y + End_Jump.Y) / 2) + 10.f
-							, (Start_Jump.Z + End_Jump.Z) / 2) * ForwardVector * 0.5;
-						m_bJumping = true;
-						Alpha = 0.f;
-					}
-					else
-					{
-						UE_LOG(LogTemp, Warning, TEXT("Not find"));
-					}
+					UE_LOG(LogTemp, Warning, TEXT("Rabbit Ablity"));
+					// 現在向いてる方向のベクトル取得
+					ForwardVector = SetForwardVector(PlayerDirection);
+					// ヒットしたアクターのスプライト取得
+					UPaperSprite* Sprite = HitBoxComp->GetSprite();
+					// 取得したスプライトサイズを取得
+					FVector2D ActorScale = FVector2D(
+						OutHit.GetActor()->GetActorScale().X,
+						OutHit.GetActor()->GetActorScale().Z
+					);
+
+					const FBoxSphereBounds Bounds = Sprite->GetRenderBounds();
+					const FVector SpriteSize = Bounds.BoxExtent * 2.0f;
+
+					FVector2D HitBox_Size = FVector2D(
+						SpriteSize.X * ActorScale.X,
+						SpriteSize.Z * ActorScale.Y
+					);
+
+					// 取得したサイズをFVectorに変換
+					FVector Ends = FVector(HitBox_Size.X / 1.f, 5.f, HitBox_Size.Y / 1.f);
+					// 現在位置を指定
+					Start_Jump = GetActorLocation();
+					// 現在位置とスプライトサイズと方向ベクトルを計算し着地点を計算
+					End_Jump = GetActorLocation() + Ends * 1.1f * ForwardVector;
+					// スタートとエンドからコントロールポイントを計算
+					Controlpoint_Jump = FVector(
+						(Start_Jump.X + (End_Jump.X - Start_Jump.X) / 2.f),
+						(Start_Jump.Y + End_Jump.Y) + 2.f
+						, (Start_Jump.Z + (End_Jump.Z - Start_Jump.Z) / 2.f)
+					) + 10.f;
+
+					// ジャンプフラグをtrueにする
+					m_bJumping = true;
+					Alpha = 0.f;
+				}
+				else
+				{
+					UE_LOG(LogTemp, Warning, TEXT("Not find"));
 				}
 			}
 			else
 			{
 				UE_LOG(LogTemp, Warning, TEXT("not Stone"));
 			}
-			
+
 		}
 		else
 		{
@@ -409,18 +429,16 @@ FVector AMainCharacter::SetForwardVector(EPlayerDirection _playerdirection)
 //ジャンプ処理
 void AMainCharacter::UpdateJump(float Deltatime)
 {
-	if (m_bJumping) 
+	if (m_bJumping)
 	{
 		//ジャンプ量を計算
 		m_nowJumpHeight = JUMP_HEIGHT;
-		
+
 		Alpha += Deltatime;
-		float T = FMath::Clamp(Alpha * 0.9f, 0.0f, 1.0f);
+		float T = FMath::Clamp(Alpha, 0.0f, 1.0f);
 		FVector NewLocation = Jump(Start_Jump, Controlpoint_Jump, End_Jump, T);
 		SetActorLocation(NewLocation);
 
-		
-		
 		if (T == 1.f)
 		{
 			m_bJumping = false;
