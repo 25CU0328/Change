@@ -57,6 +57,12 @@ private:
 
 	AMainCharacter* MainCharacter; // プレイヤー
 
+	// 入力を受け付けるかどうかのフラグ
+	bool bEnableInput;
+
+	// ------------
+	// Input Action
+	// ------------
 private:
 	// プレイヤーの移動処理
 	UFUNCTION()
@@ -77,4 +83,14 @@ private:
 	// 能力使用ボタンが押されたら呼び出される関数
 	UFUNCTION()
 	void OnIA_UseAbility();
+
+	// ------------
+	// Event Callback
+	// ------------
+private:
+	// フェードイン開始時呼び出されるメソッド
+	void OnFadeInStart(const FString& Message);
+
+	// フェードイン終了時時呼び出されるメソッド
+	void OnFadeInEnd(const FString& Message);
 };

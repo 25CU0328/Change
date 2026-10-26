@@ -57,9 +57,9 @@ void AStageCamera::BeginPlay()
 
     // イベントを登録する
     EventSubsystem->Register<AStageCamera>(
-        EGameEvent::RoomCreated,
+        EGameEvent::FadeInStart,
         this,
-        &AStageCamera::OnRoomCreated
+        &AStageCamera::OnFadeInStart
     );
 
     UpdateFadeIn(1.0f);
@@ -90,6 +90,13 @@ void AStageCamera::Tick(float DeltaTime)
         FadeInCounter = FMath::Clamp(FadeInCounter, 0.0f, FadeInDuration);
 
         UpdateFadeIn(1.0f - (FadeInCounter / FadeInDuration));
+    
+        if (FadeInCounter == 0)
+        {
+            auto EventManager = GetGameInstance()->GetSubsystem<UGameEventSubsystem>();
+
+            EventManager->SendEvent(EGameEvent::FadeInEnd, "");
+        }
     }
 }
 
@@ -296,7 +303,7 @@ void AStageCamera::OnRoomCleared(const FString& Message)
 }
 
 // ルームが生成された時呼び出される
-void AStageCamera::OnRoomCreated(const FString& Message)
+void AStageCamera::OnFadeInStart(const FString& Message)
 {
     FadeInCounter = FadeInDuration;
 }

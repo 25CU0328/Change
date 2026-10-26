@@ -76,5 +76,5 @@ protected:
     void OnRoomCleared(const FString& Message);
 
     // ルームが生成された時呼び出される
-    void OnRoomCreated(const FString& Message);
+    void OnFadeInStart(const FString& Message);
 };

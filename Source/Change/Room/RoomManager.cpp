@@ -93,7 +93,7 @@ void ARoomManager::OnRoomCleared(const FString& EventMessage)
     // そうだったらステージクリアイベントを送る
     if (IsAllRoomCleared())
     {
-        auto* EventSubsystem = GetGameInstance()->GetSubsystem<UGameEventSubsystem>();
+        auto EventSubsystem = GetGameInstance()->GetSubsystem<UGameEventSubsystem>();
         if (!EventSubsystem)
         {
             UE_LOG(LogTemp, Warning, TEXT("GameEventSubsystem not available"));
@@ -111,6 +111,16 @@ void ARoomManager::OnRoomCleared(const FString& EventMessage)
     
     // 新しいルームを生成する
 	GenerateRoom();
+
+    auto EventSubsystem = GetGameInstance()->GetSubsystem<UGameEventSubsystem>();
+    if (!EventSubsystem)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("GameEventSubsystem not available"));
+        return;
+    }
+
+    // イベントを発送
+    EventSubsystem->SendEvent(EGameEvent::FadeInStart, "");
 }
 
 // ルームをリセットしたい時呼び出されたメソッド
@@ -197,10 +207,6 @@ void ARoomManager::GenerateRoom()
 
     // カメラが参照しているルームを設定する
     StageCamera->SetRoom(CurrentRoom);
-
-    auto EventManager = GetGameInstance()->GetSubsystem<UGameEventSubsystem>();
-
-    EventManager->SendEvent(EGameEvent::RoomCreated, "");
 }
 
 // 現在ルームを削除する
