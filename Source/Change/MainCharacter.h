@@ -127,6 +127,9 @@ private:
 	// プレイヤー状態を更新する
 	void UpdatePlayerState();
 
+	// 各プレイヤーステータスの初期化
+	void InitPlayerStatus();
+
 	// 変身データを適用する
 	void ApplyCharacterFormData();
 	// アビリティを使用時のレイキャスト処理
@@ -134,6 +137,8 @@ private:
 
 	FVector SetForwardVector(EPlayerDirection _playerdirection);
 
+	// ルームリセット時呼び出されるメソッド
+	void OnRoomReset(const FString& Message);
 private:
 	//アビリティ使用状態フラグ
 

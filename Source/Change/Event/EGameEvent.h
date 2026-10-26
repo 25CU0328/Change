@@ -16,7 +16,9 @@ enum class EGameEvent : uint8
 	RoomReset, // ルームリセット
 	StageClear,// ステージクリア
 	TransitionLevel, // 別のレベルに遷移する
-	ToMainMenu, // メインメニューに遷移する
+	ToMainMenu,		// メインメニューに遷移する
+	FadeInStart,	// フェードインが完成した
+	FadeInEnd,		// フェードインが完成した
 
 	SwitchPressed,	// スウィッチが押された
 	SwitchReleased, // スウィッチが離された

@@ -19,6 +19,9 @@
 #include "PaperSpriteComponent.h"
 #include "PaperSprite.h"
 
+// イベントを受けるためにインクルード
+#include "Change/Event/GameEventSubsystem.h"
+
 #define JUMP_HEIGHT (m_jumpTime * m_jumpTime * ( -980.f) / 2 ) + ( m_jumpTime * 450.f )
 
 // Sets default values
@@ -67,15 +70,17 @@ void AMainCharacter::BeginPlay()
 	// 変身データを管理するコンポネントを取得する
 	CharacterFormDataComponent = FindComponentByClass<UCharacterFormDataComponent>();
 
-	// プレイヤーの状態をアイドル状態に初期化
-	CurrentPlayerState = EPlayerState::Idle;
-
-	// プレイヤーの向きを右に初期化
-	PlayerDirection = EPlayerDirection::Right;
-
-	//　変身の状態を人間に初期化
-	TransformState = ETransformState::Human;
 	SpriteComponent = FindComponentByClass<UPaperSpriteComponent>();
+
+	auto EventManager = GetGameInstance()->GetSubsystem<UGameEventSubsystem>();
+	EventManager->Register<AMainCharacter>(
+		EGameEvent::RoomReset,
+		this,
+		&AMainCharacter::OnRoomReset
+	);
+
+	// 各状態の初期化
+	InitPlayerStatus();
 }
 
 // Called every frame
@@ -212,6 +217,19 @@ void AMainCharacter::UpdateDirection(const FVector2f& MovementVector)
 			PlayerDirection = EPlayerDirection::Down;
 		}
 	}
+}
+
+// 各プレイヤーステータスの初期化
+void AMainCharacter::InitPlayerStatus()
+{
+	// プレイヤーの状態をアイドル状態に初期化
+	CurrentPlayerState = EPlayerState::Idle;
+
+	// プレイヤーの向きを右に初期化
+	PlayerDirection = EPlayerDirection::Right;
+
+	//　変身の状態を人間に初期化
+	TransformState = ETransformState::Human;
 }
 
 // プレイヤー状態を更新する
@@ -424,6 +442,16 @@ FVector AMainCharacter::SetForwardVector(EPlayerDirection _playerdirection)
 	}
 
 	return vector;
+}
+
+// ルームリセット時呼び出されるメソッド
+void AMainCharacter::OnRoomReset(const FString& Message)
+{
+	// 各ステータスの初期化
+	InitPlayerStatus();
+
+	// 変身データを更新する
+	ApplyCharacterFormData();
 }
 
 //ジャンプ処理
