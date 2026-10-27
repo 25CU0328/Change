@@ -80,7 +80,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
 	TSubclassOf<UPaperZDAnimInstance> AS_Ribbit;
 
-private:
+
 	// プレイヤーの状態
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	EPlayerState CurrentPlayerState;
@@ -91,7 +91,7 @@ private:
 
 	// 変身時の状態
 	ETransformState TransformState;
-
+private:
 	// 移動処理を行うためのコンポーネント
 	TObjectPtr<UCharacterMovementComponent> MovementComponent;
 
@@ -113,7 +113,10 @@ public:
 	UPROPERTY()
 	TObjectPtr<UPaperSpriteComponent> SpriteComponent;
 
-	void SetCanuesAbility(bool b_flg) { CanuesAbility = b_flg; }
+	// 移動制限を設定する
+	void SetMovementConstraint(const FVector2f& NewConstraint);
+
+	void SetPushingStone(bool b_flg) { bIsPushingStone = b_flg; }
 
 	bool GetIsUesAbility() { return m_bUesingAbility; }
 
@@ -135,6 +138,9 @@ private:
 	// アビリティを使用時のレイキャスト処理
 	void UpdateUesAbilityLine();
 
+	
+
+
 	FVector SetForwardVector(EPlayerDirection _playerdirection);
 
 	// ルームリセット時呼び出されるメソッド
@@ -143,10 +149,13 @@ private:
 	//アビリティ使用状態フラグ
 
 	bool m_bUesingAbility;
-	bool CanuesAbility;
+	bool bIsPushingStone;
 	bool StopMove;
 
 	EPlayerState PlayerState;
+
+	// 移動制限
+	FVector MovementConstraint;
 
 	FVector ForwardVector;
 	FVector m_posBeforeJump;

@@ -27,7 +27,7 @@
 // Sets default values
 AMainCharacter::AMainCharacter()
 	:m_bUesingAbility(false)
-	, CanuesAbility(false)
+	, bIsPushingStone(false)
 	, StopMove(false)
 	, ForwardVector(0, 0, 0)
 	, m_posBeforeJump(0, 0, 0)
@@ -125,24 +125,24 @@ void AMainCharacter::UpdateMovement(const FVector2f& MovementVector)
 		// キャラクターの右方向に移動する
 		if (m_bUesingAbility)
 		{
-			if (PlayerDirection == EPlayerDirection::Up || PlayerDirection == EPlayerDirection::Down)
+			if ((MovementVector.X != MovementConstraint.X ||
+				MovementVector.Y != MovementConstraint.Z) &&
+				MovementConstraint != FVector::ZeroVector
+			)
 			{
+
+				UE_LOG(
+					LogTemp,
+					Warning,
+					TEXT("MovementVector:(%.1f, %.1f), MovementConstraint:(%.1f, %.1f)"),
+					MovementVector.X,
+					MovementVector.Y,
+					MovementConstraint.X,
+					MovementConstraint.Z
+				);
 				return;
 			}
-			else if (PlayerDirection == EPlayerDirection::Right)
-			{
-				if (MovementVector.X < 0.0f)
-				{
-					return;
-				}
-			}
-			else if (PlayerDirection == EPlayerDirection::Left)
-			{
-				if (MovementVector.X >= 0.0f)
-				{
-					return;
-				}
-			}
+				
 		}
 
 
@@ -159,21 +159,23 @@ void AMainCharacter::UpdateMovement(const FVector2f& MovementVector)
 		// キャラクターの右方向に移動する
 		if (m_bUesingAbility)
 		{
-			if (PlayerDirection == EPlayerDirection::Right || PlayerDirection == EPlayerDirection::Left)
+			if (m_bUesingAbility)
 			{
-				return;
-			}
-			else if (PlayerDirection == EPlayerDirection::Down)
-			{
-				if (MovementVector.Y > 0.0f)
+				if ((MovementVector.X != MovementConstraint.X ||
+					MovementVector.Y != MovementConstraint.Z ) &&
+					MovementConstraint != FVector::ZeroVector
+					)
 				{
-					return;
-				}
-			}
-			else if (PlayerDirection == EPlayerDirection::Up)
-			{
-				if (MovementVector.Y <= 0.0f)
-				{
+
+					UE_LOG(
+						LogTemp,
+						Warning,
+						TEXT("MovementVector:(%.1f, %.1f), MovementConstraint:(%.1f, %.1f)"),
+						MovementVector.X,
+						MovementVector.Y,
+						MovementConstraint.X,
+						MovementConstraint.Z
+					);
 					return;
 				}
 			}
@@ -230,6 +232,15 @@ void AMainCharacter::InitPlayerStatus()
 
 	//　変身の状態を人間に初期化
 	TransformState = ETransformState::Human;
+
+	// 移動制限を初期化する
+	MovementConstraint = FVector::ZeroVector;
+
+	bIsPushingStone = false;
+
+	m_bJumping = false;
+
+	m_bUesingAbility = false;
 }
 
 // プレイヤー状態を更新する
@@ -275,7 +286,9 @@ void AMainCharacter::ApplyCharacterFormData()
 // 猪に変身したときの処理
 void AMainCharacter::UpdateTransformBoar()
 {
-	if (m_bJumping)return;
+	if (m_bJumping)
+		return;
+
 	TransformState = ETransformState::Boar;
 
 	// 変身後のデータを適用する
@@ -285,7 +298,9 @@ void AMainCharacter::UpdateTransformBoar()
 // 兎に変身したときの処理
 void AMainCharacter::UpdateTransformRabbit()
 {
-	if (m_bJumping)return;
+	if (m_bJumping || bIsPushingStone)
+		return;
+
 	TransformState = ETransformState::Rabbit;
 
 	// 変身後のデータを適用する
@@ -295,7 +310,9 @@ void AMainCharacter::UpdateTransformRabbit()
 // 変身状態を解除するときの処理
 void AMainCharacter::UpdateTransformCancel()
 {
-	if (m_bJumping)return;
+	if (m_bJumping || bIsPushingStone)
+		return;
+
 	TransformState = ETransformState::Human;
 
 	// 変身後のデータを適用する
@@ -310,7 +327,7 @@ void AMainCharacter::UpdateUseAbility()
 		UpdateRabbitUbility();
 	}
 
-	if (!CanuesAbility) {
+	if (!bIsPushingStone) {
 		//デバッグ確認用
 		UE_LOG(LogTemp, Warning, TEXT("PLAYER not Ablity"));
 		return;
@@ -482,4 +499,10 @@ FVector AMainCharacter::Jump(FVector p1, FVector p2, FVector p3, float t)
 	FVector A = FMath::Lerp(p1, p2, t);
 	FVector B = FMath::Lerp(p2, p3, t);
 	return FMath::Lerp(A, B, t);
+}
+
+// 移動制限を設定する
+void AMainCharacter::SetMovementConstraint(const FVector2f& NewConstraint)
+{
+	MovementConstraint = FVector(NewConstraint.X, 0.0f, NewConstraint.Y);
 }

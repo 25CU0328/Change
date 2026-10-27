@@ -86,7 +86,21 @@ void AStone::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherAc
 			m_pPlayerChara = Cast<AMainCharacter>(OtherActor);
 			if (NeedAnimalType == m_pPlayerChara->GetTransformState())
 			{
-				m_pPlayerChara->SetCanuesAbility(true);
+				FVector2f DirectionVector = FVector2f(
+					GetActorLocation().X - OtherActor->GetActorLocation().X,
+					GetActorLocation().Z - OtherActor->GetActorLocation().Z
+				);
+				DirectionVector.Normalize();
+
+				FVector2f ConstaintDirection = FMath::Abs(DirectionVector.X) >= FMath::Abs(DirectionVector.Y) ?
+					FVector2f(DirectionVector.X / FMath::Abs(DirectionVector.X), 0) :
+					FVector2f(0, DirectionVector.Y / FMath::Abs(DirectionVector.Y));
+
+				m_pPlayerChara->SetMovementConstraint(ConstaintDirection);
+
+
+				m_pPlayerChara->SetPushingStone(true);
+
 				SetUseAbility(true);
 				//デバッグ確認用
 				UE_LOG(LogTemp, Warning, TEXT("OnOverlapBegin"));
@@ -113,7 +127,9 @@ void AStone::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActo
 			{
 				return;
 			}
-			m_pPlayerChara->SetCanuesAbility(false);
+
+			m_pPlayerChara->SetMovementConstraint(FVector2f::ZeroVector);
+			m_pPlayerChara->SetPushingStone(false);
 			SetUseAbility(false);
 			//デバッグ確認用
 			UE_LOG(LogTemp, Warning, TEXT("OnOverlapEnd"));
