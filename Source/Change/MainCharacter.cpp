@@ -19,23 +19,35 @@
 #include "PaperSpriteComponent.h"
 #include "PaperSprite.h"
 
+// イベントを受けるためにインクルード
+#include "Change/Event/GameEventSubsystem.h"
+
 #define JUMP_HEIGHT (m_jumpTime * m_jumpTime * ( -980.f) / 2 ) + ( m_jumpTime * 450.f )
 
 // Sets default values
 AMainCharacter::AMainCharacter()
 	:m_bUesingAbility(false)
-	,CanuesAbility(false)
-    ,StopMove(false)
-	,ForwardVector(0,0,0)
+	, bIsPushingStone(false)
+	, StopMove(false)
+	, ForwardVector(0, 0, 0)
 	, m_posBeforeJump(0, 0, 0)
-	,m_jumpTime(0.f)
-	,m_bJumping(false)
-	,m_nowJumpHeight(0.f)
-	,Start_Jump(0,0,0)
-	,Controlpoint_Jump(0, 0, 0)
-	,End_Jump(0, 0, 0)
+	, m_jumpTime(0.f)
+	, m_bJumping(false)
+	, m_nowJumpHeight(0.f)
+	, Start_Jump(0, 0, 0)
+	, Controlpoint_Jump(0, 0, 0)
+	, End_Jump(0, 0, 0)
+	, DashGauge(0.f)
+	, bDashing(false)
+	, DashTime(0.f)
+	, CurrentSpeed(0.f)
+	, bChargeing(false)
+	, ChargeThreshold(70.f)
+	, bintovergrownPath(false)
+	, bDive(false)
+	, bDiving(false)
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 }
 
@@ -49,14 +61,14 @@ AMainCharacter::~AMainCharacter()
 void AMainCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
-    // プレイヤーコントローラーにキャストできないなら処理しない
-	auto* playerController = Cast<AMainCharacterController>(Controller);
-    if (!playerController)
-        return;
 
-    // 入力を有効にする
-    EnableInput(playerController);
+	// プレイヤーコントローラーにキャストできないなら処理しない
+	auto* playerController = Cast<AMainCharacterController>(Controller);
+	if (!playerController)
+		return;
+
+	// 入力を有効にする
+	EnableInput(playerController);
 
 	// 移動処理を行うためのコンポーネントを取得する
 	MovementComponent = GetCharacterMovement();
@@ -67,15 +79,17 @@ void AMainCharacter::BeginPlay()
 	// 変身データを管理するコンポネントを取得する
 	CharacterFormDataComponent = FindComponentByClass<UCharacterFormDataComponent>();
 
-	// プレイヤーの状態をアイドル状態に初期化
-	CurrentPlayerState = EPlayerState::Idle;
-
-	// プレイヤーの向きを右に初期化
-	PlayerDirection = EPlayerDirection::Right;
-
-	//　変身の状態を人間に初期化
-	TransformState = ETransformState::Human;
 	SpriteComponent = FindComponentByClass<UPaperSpriteComponent>();
+
+	auto EventManager = GetGameInstance()->GetSubsystem<UGameEventSubsystem>();
+	EventManager->Register<AMainCharacter>(
+		EGameEvent::RoomReset,
+		this,
+		&AMainCharacter::OnRoomReset
+	);
+
+	// 各状態の初期化
+	InitPlayerStatus();
 }
 
 // Called every frame
@@ -86,7 +100,16 @@ void AMainCharacter::Tick(float DeltaTime)
 	// 状態の更新
 	UpdatePlayerState();
 
+	// ジャンプの更新
 	UpdateJump(DeltaTime);
+
+	// ダッシュの更新
+	UpdateDash(DeltaTime);
+
+	// 突撃中の更新
+	UpdateCharge();
+
+	UpdateElephantUbility(DeltaTime);
 }
 
 // Called to bind functionality to input
@@ -98,6 +121,11 @@ void AMainCharacter::SetupPlayerInputComponent(UInputComponent* _playerInputComp
 // プレイヤーの移動処理
 void AMainCharacter::UpdateMovement(const FVector2f& MovementVector)
 {
+	if (bintovergrownPath)
+	{
+		UpdatePath(MovementVector);
+	}
+
 	// MovementComponentが取得できない場合は処理しない
 	if (!MovementComponent)
 	{
@@ -120,27 +148,27 @@ void AMainCharacter::UpdateMovement(const FVector2f& MovementVector)
 		// キャラクターの右方向に移動する
 		if (m_bUesingAbility)
 		{
-		    if (PlayerDirection == EPlayerDirection::Up || PlayerDirection == EPlayerDirection::Down)
-		    {
-			   return;
-		    }
-		    else if (PlayerDirection == EPlayerDirection::Right)
-		    {
-			   if (MovementVector.X < 0.0f)
-			   {
-				  return;
-			   }
-		    }
-		    else if (PlayerDirection == EPlayerDirection::Left)
-		    {
-			   if (MovementVector.X >= 0.0f)
-			   {
-				  return;
-			   }
-		    }
+			if ((MovementVector.X != MovementConstraint.X ||
+				MovementVector.Y != MovementConstraint.Z) &&
+				MovementConstraint != FVector::ZeroVector
+			)
+			{
+
+				UE_LOG(
+					LogTemp,
+					Warning,
+					TEXT("MovementVector:(%.1f, %.1f), MovementConstraint:(%.1f, %.1f)"),
+					MovementVector.X,
+					MovementVector.Y,
+					MovementConstraint.X,
+					MovementConstraint.Z
+				);
+				return;
+			}
+				
 		}
 
-		
+
 		AddMovementInput(FVector(1, 0, 0), MovementVector.X);
 	}
 	else if (MovementVector.Y != 0.0f)
@@ -154,24 +182,26 @@ void AMainCharacter::UpdateMovement(const FVector2f& MovementVector)
 		// キャラクターの右方向に移動する
 		if (m_bUesingAbility)
 		{
-		    if (PlayerDirection == EPlayerDirection::Right|| PlayerDirection == EPlayerDirection::Left)
-		    {
-			   return;
-		    }
-		    else if (PlayerDirection == EPlayerDirection::Down)
-		    {
-			   if (MovementVector.Y > 0.0f)
-			   {
-				  return;
-			   }
-		    }
-		    else if (PlayerDirection == EPlayerDirection::Up)
-		    {
-			   if (MovementVector.Y <= 0.0f)
-			   {
-				  return;
-			   }
-		    }
+			if (m_bUesingAbility)
+			{
+				if ((MovementVector.X != MovementConstraint.X ||
+					MovementVector.Y != MovementConstraint.Z ) &&
+					MovementConstraint != FVector::ZeroVector
+					)
+				{
+
+					UE_LOG(
+						LogTemp,
+						Warning,
+						TEXT("MovementVector:(%.1f, %.1f), MovementConstraint:(%.1f, %.1f)"),
+						MovementVector.X,
+						MovementVector.Y,
+						MovementConstraint.X,
+						MovementConstraint.Z
+					);
+					return;
+				}
+			}
 		}
 
 		// キャラクターの前方向に移動する
@@ -179,6 +209,34 @@ void AMainCharacter::UpdateMovement(const FVector2f& MovementVector)
 	}
 }
 
+// ダッシュ中の処理
+void AMainCharacter::UpdatePath(const FVector2f& MovementVector)
+{
+	FVector2f vector = MovementVector;
+
+	if (MovementVector.X != 0.0f)
+	{
+		if (MovementComponent->Velocity.Z != 0.0f)
+		{
+			AddMovementInput(FVector(1, 0, 0), vector.X);
+		}
+
+
+		AddMovementInput(FVector(1, 0, 0), MovementVector.X);
+	}
+	else if (MovementVector.Y != 0.0f)
+	{
+		if (MovementComponent->Velocity.X != 0.0f)
+		{
+			// キャラクターの前方向に移動する
+			AddMovementInput(FVector(0, 0, 1), vector.Y);
+		}
+
+		// キャラクターの前方向に移動する
+		AddMovementInput(FVector(0, 0, 1), MovementVector.Y);
+
+	}
+}
 
 // プレイヤーの向きを更新する
 void AMainCharacter::UpdateDirection(const FVector2f& MovementVector)
@@ -201,7 +259,7 @@ void AMainCharacter::UpdateDirection(const FVector2f& MovementVector)
 			PlayerDirection = EPlayerDirection::Left;
 		}
 	}
-	else 
+	else
 	{
 		if (MovementVector.Y > 0.0f)
 		{
@@ -214,19 +272,45 @@ void AMainCharacter::UpdateDirection(const FVector2f& MovementVector)
 	}
 }
 
+// 各プレイヤーステータスの初期化
+void AMainCharacter::InitPlayerStatus()
+{
+	// プレイヤーの状態をアイドル状態に初期化
+	CurrentPlayerState = EPlayerState::Idle;
+
+	// プレイヤーの向きを右に初期化
+	PlayerDirection = EPlayerDirection::Right;
+
+	//　変身の状態を人間に初期化
+	TransformState = ETransformState::Human;
+
+	// 移動制限を初期化する
+	MovementConstraint = FVector::ZeroVector;
+
+	bIsPushingStone = false;
+
+	m_bJumping = false;
+
+	m_bUesingAbility = false;
+}
+
 // プレイヤー状態を更新する
 void AMainCharacter::UpdatePlayerState()
 {
-	// 移動中かどうかで状態を更新する
-	if (!FMath::IsNearlyZero(MovementComponent->Velocity.X) ||
-		!FMath::IsNearlyZero(MovementComponent->Velocity.Z)
-	)
-	{
-		CurrentPlayerState = EPlayerState::Move;
-	}
+	if (bDiving)CurrentPlayerState = EPlayerState::UseAbility;
 	else
 	{
-		CurrentPlayerState = EPlayerState::Idle;
+		// 移動中かどうかで状態を更新する
+		if (!FMath::IsNearlyZero(MovementComponent->Velocity.X) ||
+			!FMath::IsNearlyZero(MovementComponent->Velocity.Z)
+			)
+		{
+			CurrentPlayerState = EPlayerState::Move;
+		}
+		else
+		{
+			CurrentPlayerState = EPlayerState::Idle;
+		}
 	}
 }
 
@@ -250,14 +334,16 @@ void AMainCharacter::ApplyCharacterFormData()
 	AnimationComponent->SetAnimInstanceClass(Data.AnimationInstance);
 
 	MovementComponent->BrakingDecelerationFlying = Data.Deceleration;
-	MovementComponent->MaxFlySpeed = Data.MaxSpeed;
+	MovementComponent->MaxFlySpeed = Data.WalkMaxSpeed;
 	MovementComponent->MaxAcceleration = Data.Acceleration;
 }
 
 // 猪に変身したときの処理
 void AMainCharacter::UpdateTransformBoar()
 {
-	if (m_bJumping)return;
+	if (m_bJumping)
+		return;
+
 	TransformState = ETransformState::Boar;
 
 	// 変身後のデータを適用する
@@ -267,8 +353,22 @@ void AMainCharacter::UpdateTransformBoar()
 // 兎に変身したときの処理
 void AMainCharacter::UpdateTransformRabbit()
 {
-	if (m_bJumping)return;
+	if (m_bJumping || bIsPushingStone)
+		return;
+
 	TransformState = ETransformState::Rabbit;
+
+	// 変身後のデータを適用する
+	ApplyCharacterFormData();
+}
+
+// 象に変身したときの処理
+void AMainCharacter::UpdateTransformElephant()
+{
+	if (m_bJumping || bIsPushingStone)
+		return;
+
+	TransformState = ETransformState::Elephant;
 
 	// 変身後のデータを適用する
 	ApplyCharacterFormData();
@@ -277,7 +377,9 @@ void AMainCharacter::UpdateTransformRabbit()
 // 変身状態を解除するときの処理
 void AMainCharacter::UpdateTransformCancel()
 {
-	if (m_bJumping)return;
+	if (m_bJumping || bIsPushingStone)
+		return;
+
 	TransformState = ETransformState::Human;
 
 	// 変身後のデータを適用する
@@ -286,27 +388,86 @@ void AMainCharacter::UpdateTransformCancel()
 
 // 能力を使う時の処理
 void AMainCharacter::UpdateUseAbility()
-{
+{	
 	if (TransformState == ETransformState::Rabbit)
 	{
 		UpdateRabbitUbility();
 	}
-
-	if (!CanuesAbility) {
-		//デバッグ確認用
-		UE_LOG(LogTemp, Warning, TEXT("PLAYER not Ablity"));
-		return;
-	}
-
-	if (!m_bUesingAbility)
+	else if (TransformState == ETransformState::Boar)
 	{
-		m_bUesingAbility = true;
+		UseAbilityCheck();
 	}
-	else
+	else if (TransformState == ETransformState::Elephant)
 	{
-		m_bUesingAbility = false;
+		UseAbilityCheck();
+	}
+}
+
+// 能力が使用できるかチェック
+bool AMainCharacter::UseAbilityCheck()
+{
+
+	bool Check = false;
+	USkeletalMeshComponent* pMeshComp = GetMesh();
+	if (pMeshComp != NULL)
+	{
+		ForwardVector = SetForwardVector(PlayerDirection);
+
+		//レイを飛ばす
+		//レイの始点はActorの位置
+		FVector Start = GetActorLocation();
+		//レイの終点はActorから前方向の一定距離
+		FVector End = GetActorLocation() + ForwardVector * 50.f;
+
+		//デバッグ確認用のラインを描画
+		DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 5.0f);
+
+		End.Y = Start.Y;
+
+		//コリジョン判定で無視する項目を指定（今回はこのActor自分自身。thisポインタで指定）
+		FCollisionQueryParams CollisionParams;
+		CollisionParams.AddIgnoredActor(this);
+
+		//ヒットした（＝コリジョン判定を受けた）オブジェクトを格納する変数
+		FHitResult OutHit;
+
+		//レイを飛ばし、全てのオブジェクトに対してコリジョン判定を行う
+		//isHitは、ヒットした場合にtrueになる
+		bool isHit = GetWorld()->LineTraceSingleByChannel(OutHit, Start, End,
+			ECC_WorldStatic, CollisionParams);
+		//ヒットするオブジェクトがある場合
+		if (isHit)
+		{
+			//今ヒットしたActorが、持ち上げられるオブジェクトActorの場合
+			if (OutHit.GetActor()->ActorHasTag("Gimmick"))
+			{
+				UPaperSpriteComponent* HitSpriteComp = Cast<UPaperSpriteComponent>(OutHit.GetComponent());
+				UBoxComponent* HitBoxComp= Cast<UBoxComponent>(OutHit.GetComponent());
+
+				if (HitSpriteComp)
+				{
+					AGimmickBase* pLiftObject = Cast<AGimmickBase>(OutHit.GetActor());
+					Check = pLiftObject->IsAnimalcheck(TransformState);
+					pLiftObject->IsUseAbility(Check);
+				}
+				
+				if (HitBoxComp)
+				{
+					AGimmickBase* pLiftObject = Cast<AGimmickBase>(OutHit.GetActor());
+					Check = pLiftObject->IsAnimalcheck(TransformState);
+					pLiftObject->IsUseAbility(Check);
+
+					if (Check)Diving();
+					
+				}
+			}
+			else UE_LOG(LogTemp, Warning, TEXT("not gimmick"));
+
+		}
+		else UE_LOG(LogTemp, Warning, TEXT("Rabbut not Ablity"));
 
 	}
+	return Check;
 }
 
 // 兎のアビリティ使用時の処理
@@ -324,7 +485,7 @@ void AMainCharacter::UpdateRabbitUbility()
 		FVector End = GetActorLocation() + ForwardVector * 50.f;
 
 		//デバッグ確認用のラインを描画
-		DrawDebugLine(GetWorld(),Start,End,FColor::Green,false,5.0f);
+		DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 5.0f);
 
 		End.Y = Start.Y;
 
@@ -343,45 +504,98 @@ void AMainCharacter::UpdateRabbitUbility()
 		//ヒットするオブジェクトがある場合
 		if (isHit)
 		{
-			//今ヒットしたActorが、持ち上げられるオブジェクトActorの場合
-			if (OutHit.GetActor()->ActorHasTag("Stone"))
+			//今ヒットしたActorが、ギミックオブジェクトActorの場合
+			if (OutHit.GetActor()->ActorHasTag("Stone") || OutHit.GetActor()->ActorHasTag("Mizo"))
 			{
-				if (OutHit.bBlockingHit)
+				UPaperSpriteComponent* HitBoxComp = Cast<UPaperSpriteComponent>(OutHit.GetComponent());
+
+				if (HitBoxComp)
 				{
-					UPaperSpriteComponent*  HitBoxComp = Cast<UPaperSpriteComponent>(OutHit.GetComponent());
-					
-					if (HitBoxComp)
-					{
-						UE_LOG(LogTemp, Warning, TEXT("Rabbit Ablity"));
-						//UPaperSprite* Sprite = HitBoxComp->GetSprite();
-						//FVector2D HitBox_Size = Sprite->GetSourceSize();
-						//FVector Ends = FVector(HitBox_Size.X, 0, HitBox_Size.Y);
-						ForwardVector = SetForwardVector(PlayerDirection);
-						Start_Jump = GetActorLocation();
-						End_Jump = GetActorLocation() + 90 * ForwardVector;
-						Controlpoint_Jump = FVector((Start_Jump.X + End_Jump.X) / 2,
-							((Start_Jump.Y + End_Jump.Y) / 2) + 10.f
-							, (Start_Jump.Z + End_Jump.Z) / 2) * ForwardVector * 0.5;
-						m_bJumping = true;
-						Alpha = 0.f;
-					}
-					else
-					{
-						UE_LOG(LogTemp, Warning, TEXT("Not find"));
-					}
+					UE_LOG(LogTemp, Warning, TEXT("Rabbit Ablity"));
+					// 現在向いてる方向のベクトル取得
+					ForwardVector = SetForwardVector(PlayerDirection);
+					// ヒットしたアクターのスプライト取得
+					UPaperSprite* Sprite = HitBoxComp->GetSprite();
+					// 取得したスプライトサイズを取得
+					FVector2D ActorScale = FVector2D(
+						OutHit.GetActor()->GetActorScale().X,
+						OutHit.GetActor()->GetActorScale().Z
+					);
+
+					const FBoxSphereBounds Bounds = Sprite->GetRenderBounds();
+					const FVector SpriteSize = Bounds.BoxExtent * 2.0f;
+
+					FVector2D HitBox_Size = FVector2D(
+						SpriteSize.X * ActorScale.X,
+						SpriteSize.Z * ActorScale.Y
+					);
+
+					// 取得したサイズをFVectorに変換
+					FVector Ends = FVector(HitBox_Size.X / 1.f, 5.f, HitBox_Size.Y / 1.f);
+					// 現在位置を指定
+					Start_Jump = GetActorLocation();
+					// 現在位置とスプライトサイズと方向ベクトルを計算し着地点を計算
+					End_Jump = GetActorLocation() + Ends * 1.1f * ForwardVector;
+					// スタートとエンドからコントロールポイントを計算
+					Controlpoint_Jump = FVector(
+						(Start_Jump.X + (End_Jump.X - Start_Jump.X) / 2.f),
+						(Start_Jump.Y + End_Jump.Y) + 2.f
+						, (Start_Jump.Z + (End_Jump.Z - Start_Jump.Z) / 2.f)
+					) + 10.f;
+
+					// ジャンプフラグをtrueにする
+					m_bJumping = true;
+					Alpha = 0.f;
+				}
+				else
+				{
+					UE_LOG(LogTemp, Warning, TEXT("Not find"));
 				}
 			}
 			else
 			{
 				UE_LOG(LogTemp, Warning, TEXT("not Stone"));
 			}
-			
+
 		}
 		else
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Rabbut not Ablity"));
 		}
 	}
+}
+
+// 象のアビリティ使用時の処理
+void AMainCharacter::UpdateElephantUbility(float Deltatime)
+{
+	if (!bDive)return;
+	UE_LOG(LogTemp, Warning, TEXT("ElephantUbility"));
+	ForwardVector = SetForwardVector(PlayerDirection);
+	Alpha += Deltatime;
+	
+	float T = FMath::Clamp(Alpha, 0.0f, 1.0f);
+
+	FVector NewLoaction = FMath::Lerp(Start_Jump, End_Jump, T);
+
+	if (T == 1.f)
+	{
+		Alpha = 0.f;
+		bDive = false;
+		if (!bDiving)bDiving = true;
+		else bDiving = false;
+	}
+	SetActorLocation(NewLoaction);
+}
+
+// 潜水時の処理
+void AMainCharacter::Diving()
+{
+	// 現在位置を指定
+	Start_Jump = GetActorLocation();
+	// 現在位置とスプライトサイズと方向ベクトルを計算し着地点を計算
+	End_Jump = GetActorLocation() + 80.f * ForwardVector;
+
+	bDive = true;	
 }
 
 FVector AMainCharacter::SetForwardVector(EPlayerDirection _playerdirection)
@@ -406,21 +620,29 @@ FVector AMainCharacter::SetForwardVector(EPlayerDirection _playerdirection)
 	return vector;
 }
 
+// ルームリセット時呼び出されるメソッド
+void AMainCharacter::OnRoomReset(const FString& Message)
+{
+	// 各ステータスの初期化
+	InitPlayerStatus();
+
+	// 変身データを更新する
+	ApplyCharacterFormData();
+}
+
 //ジャンプ処理
 void AMainCharacter::UpdateJump(float Deltatime)
 {
-	if (m_bJumping) 
+	if (m_bJumping)
 	{
 		//ジャンプ量を計算
 		m_nowJumpHeight = JUMP_HEIGHT;
-		
+
 		Alpha += Deltatime;
-		float T = FMath::Clamp(Alpha * 0.9f, 0.0f, 1.0f);
+		float T = FMath::Clamp(Alpha, 0.0f, 1.0f);
 		FVector NewLocation = Jump(Start_Jump, Controlpoint_Jump, End_Jump, T);
 		SetActorLocation(NewLocation);
 
-		
-		
 		if (T == 1.f)
 		{
 			m_bJumping = false;
@@ -429,6 +651,72 @@ void AMainCharacter::UpdateJump(float Deltatime)
 	}
 }
 
+// ダッシュ使用時の処理
+void AMainCharacter::UpdateUseDash()
+{
+	if (!bDashing)
+	{
+		// データを取得する
+		auto Data = CharacterFormDataComponent->GetData(TransformState);
+		UE_LOG(LogTemp, Warning, TEXT("DashMaxSpeed"));
+		MovementComponent->MaxFlySpeed = Data.DashMaxSpeed;
+		MaxSpeed = Data.DashMaxSpeed;
+	}
+	
+
+	// イノシシなのか判定
+	if (TransformState == ETransformState::Boar){ bDashing = true; }
+}
+
+// ダッシュ中の処理
+void AMainCharacter::UpdateDash(float Deltatime)
+{
+	if (bDashing)
+	{
+		// 動いていなかったらダッシュを解除する
+		if (CurrentPlayerState != EPlayerState::Move) { bDashing = false; }
+		CurrentSpeed = GetVelocity().Size2D();
+
+		// ダッシュゲージが100%になるまで計算
+		if (DashGauge <= 100.f)
+		{
+			DashGauge = (CurrentSpeed / MaxSpeed) * 100.f;
+			//UE_LOG(LogTemp, Warning, TEXT("Floatの値: %f"), DashGauge);
+			
+		}
+		// 50%を超えたら突撃中にする
+		if (DashGauge > ChargeThreshold)
+		{
+			bChargeing = true;
+			UpdateCharge();
+			UE_LOG(LogTemp, Warning, TEXT("ChargeThreshold"));
+		}
+	}
+	else
+	{
+		// ダッシュ状態ではないとき初期化
+		CurrentSpeed = 0.f;
+		MaxSpeed = 0.f;
+		DashGauge = 0.f;
+		bChargeing = false;
+		// データを取得する
+		auto Data = CharacterFormDataComponent->GetData(TransformState);
+		MovementComponent->MaxFlySpeed = Data.WalkMaxSpeed;
+	}
+}
+
+
+
+// 突撃中の処理
+void AMainCharacter::UpdateCharge()
+{
+	if (bChargeing)
+	{
+		UseAbilityCheck();
+	}
+}
+
+
 FVector AMainCharacter::Jump(FVector p1, FVector p2, FVector p3, float t)
 {
 	t = FMath::Clamp(t, 0.0f, 1.0f);
@@ -436,4 +724,10 @@ FVector AMainCharacter::Jump(FVector p1, FVector p2, FVector p3, float t)
 	FVector A = FMath::Lerp(p1, p2, t);
 	FVector B = FMath::Lerp(p2, p3, t);
 	return FMath::Lerp(A, B, t);
+}
+
+// 移動制限を設定する
+void AMainCharacter::SetMovementConstraint(const FVector2f& NewConstraint)
+{
+	MovementConstraint = FVector(NewConstraint.X, 0.0f, NewConstraint.Y);
 }

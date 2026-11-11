@@ -10,7 +10,7 @@
 #include "Change/MainCharacter.h" // プレイヤーのクラスをアクセスするため
 #include "Change/EPlayerState.h"
 
-
+#include "Change/Event/GameEventSubsystem.h"
 
 // ゲーム開始時の処理
 void AMainCharacterController::BeginPlay()
@@ -18,6 +18,31 @@ void AMainCharacterController::BeginPlay()
 	Super::BeginPlay();
 	
 	MainCharacter = Cast<AMainCharacter>(GetPawn());
+
+	bEnableInput = true;
+
+	auto EventManager = GetGameInstance()->GetSubsystem<UGameEventSubsystem>();
+	if (!EventManager)
+	{
+		UE_LOG(
+			LogTemp,
+			Error,
+			TEXT("[AMainCharacterController]: EventManger is Null")
+		);
+		return;
+	}
+
+	EventManager->Register<AMainCharacterController>(
+		EGameEvent::FadeInStart,
+		this,
+		&AMainCharacterController::OnFadeInStart
+	);
+
+	EventManager->Register<AMainCharacterController>(
+		EGameEvent::FadeInEnd,
+		this,
+		&AMainCharacterController::OnFadeInEnd
+	);
 }
 
 // 入力とメソッドのバインド
@@ -86,6 +111,18 @@ void AMainCharacterController::SetupInputComponent()
 		);
 	}
 
+	// 兎に変身のIAが設定された場合
+	if (IA_TransformElephant)
+	{
+		// ボタンが押された瞬間 (Started)
+		EnhancedInputComponent->BindAction(
+			IA_TransformElephant,
+			ETriggerEvent::Started,
+			this,
+			&AMainCharacterController::OnIA_TransformElephant
+		);
+	}
+
 	// 変身の解除のIAが設定された場合
 	if (IA_TransformCancel)
 	{
@@ -109,11 +146,28 @@ void AMainCharacterController::SetupInputComponent()
 			&AMainCharacterController::OnIA_UseAbility
 		);
 	}
+
+	// ダッシュ使用のIAが設定された場合
+	if (IA_UseDash)
+	{
+		// ボタンが押された瞬間 (Started)
+		EnhancedInputComponent->BindAction(
+			IA_UseDash,
+			ETriggerEvent::Ongoing,
+			this,
+			&AMainCharacterController::OnIA_UseDash
+		);
+
+	}
 }
 
 // プレイヤーの移動処理
 void AMainCharacterController::OnIA_PlayerMove(const FInputActionValue& InputValue)
 {
+	// 入力を受け付けないと設定する場合、処理しない
+	if (!bEnableInput)
+		return;
+
 	// キーボードの入力から移動ベクトルを取得
 	FVector2f MovementVector = FVector2f(
 		InputValue.Get<FVector>().X,
@@ -133,25 +187,76 @@ void AMainCharacterController::OnIA_PlayerMove(const FInputActionValue& InputVal
 // 猪に変身するボタンが押されたら呼び出される関数
 void AMainCharacterController::OnIA_TransformBoar()
 {
+	// 入力を受け付けないと設定する場合、処理しない
+	if (!bEnableInput)
+		return;
+
 	MainCharacter->UpdateTransformBoar();
 }
 
 // 兎に変身するボタンが押されたら呼び出される関数
 void AMainCharacterController::OnIA_TransformRabbit()
 {
+	// 入力を受け付けないと設定する場合、処理しない
+	if (!bEnableInput)
+		return;
+
 	MainCharacter->UpdateTransformRabbit();
+}
+
+// 兎に変身するボタンが押されたら呼び出される関数
+void AMainCharacterController::OnIA_TransformElephant()
+{
+	// 入力を受け付けないと設定する場合、処理しない
+	if (!bEnableInput)
+		return;
+
+	MainCharacter->UpdateTransformElephant();
 }
 
 // 変身を解除するボタンが押されたら呼び出される関数
 void AMainCharacterController::OnIA_TransformCancel()
 {
+	// 入力を受け付けないと設定する場合、処理しない
+	if (!bEnableInput)
+		return;
+
 	MainCharacter->UpdateTransformCancel();
 }
 
 // 能力使用ボタンが押されたら呼び出される関数
 void AMainCharacterController::OnIA_UseAbility()
 {	
+	// 入力を受け付けないと設定する場合、処理しない
+	if (!bEnableInput)
+		return;
+
 	//UGameEventSubsystem* pEventSubsystem = Cast<UGameEventSubsystem>(GetGameInstance());
 	//pEventSubsystem->SendEvent(EGameEvent::UseAbility, "UseAbility");
 	MainCharacter->UpdateUseAbility();
+}
+
+// ダッシュ使用ボタンが押されたら呼び出される関数
+void AMainCharacterController::OnIA_UseDash()
+{
+	// 入力を受け付けないと設定する場合、処理しない
+	if (!bEnableInput)
+		return;
+
+	MainCharacter->UpdateUseDash();
+}
+
+// フェードイン開始時呼び出されるメソッド
+void AMainCharacterController::OnFadeInStart(const FString& Message)
+{
+	bEnableInput = false;
+
+	// プレイヤーの移動を止まる
+	MainCharacter->GetMovementComponent()->StopMovementImmediately();
+}
+
+// フェードイン終了時時呼び出されるメソッド
+void AMainCharacterController::OnFadeInEnd(const FString& Message)
+{
+	bEnableInput = true;
 }

@@ -23,12 +23,13 @@ struct FCharacterFormData
 	// 移動関連
 	// --------------
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-	float MaxSpeed;	// 最大速度
+	float WalkMaxSpeed;	// ウォーク最大速度
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float DashMaxSpeed;	// ダッシュ最大速度
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	float Acceleration;	// 加速度 (cm/s)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	float Deceleration;	// 加速していない時の減速
-	
 
 	// --------------
 	// 衝突判定

@@ -48,6 +48,12 @@ void UGameFlowSubsystem::Initialize(FSubsystemCollectionBase& Collection)
         &UGameFlowSubsystem::OnStageClear
     );
 
+    EventSubsystem->Register<UGameFlowSubsystem>(
+        EGameEvent::ToMainMenu,
+        this,
+        &UGameFlowSubsystem::OnToMainMenu
+    );
+
     UE_LOG(LogTemp, Log, TEXT("GameFlowSubsystem Initialize"));
 }
 
@@ -62,7 +68,7 @@ void UGameFlowSubsystem::Deinitialize()
 // ゲーム開始に関するイベントが送られたら
 void UGameFlowSubsystem::OnGameStart(const FString& EventMessage)
 {
-    UE_LOG(LogTemp, Log, TEXT("OnGameStart Receive Event"));
+    UE_LOG(LogTemp, Warning, TEXT("OnGameStart"));
     UWorld* World = GetWorld();
 
     if (!World)
@@ -77,6 +83,7 @@ void UGameFlowSubsystem::OnGameStart(const FString& EventMessage)
 // ステージがクリアされたら呼び出されるメソッド
 void UGameFlowSubsystem::OnStageClear(const FString& EventMessage)
 {
+    UE_LOG(LogTemp, Warning, TEXT("OnStageClear"));
     UWorld* World = GetWorld();
 
     if (!World)
@@ -85,13 +92,13 @@ void UGameFlowSubsystem::OnStageClear(const FString& EventMessage)
         return;
     }
 
-    UGameplayStatics::OpenLevel(World, MainMenuName);
+    UGameplayStatics::OpenLevel(World, ClearSceneName);
 }
 
 // ゲーム終了に関するイベントが送られたら
 void UGameFlowSubsystem::OnGameEnd(const FString& EventMessage)
 {
-    UE_LOG(LogTemp, Log, TEXT("OnGameEnd Receive Event"));
+    UE_LOG(LogTemp, Warning, TEXT("OnGameEnd"));
     UWorld* World = GetWorld();
 
     if (!World)
@@ -114,4 +121,18 @@ void UGameFlowSubsystem::OnGameEnd(const FString& EventMessage)
         EQuitPreference::Quit,
         false
     );
+}
+
+// メインメニューに遷移するボタンをキリックしたら呼び出されるメソッド
+void UGameFlowSubsystem::OnToMainMenu(const FString& EventMessage)
+{
+    UWorld* World = GetWorld();
+
+    if (!World)
+    {
+        UE_LOG(LogTemp, Error, TEXT("Can't Get World!"));
+        return;
+    }
+
+    UGameplayStatics::OpenLevel(World, MainMenuName);
 }

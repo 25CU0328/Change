@@ -9,6 +9,7 @@
 #include "EPlayerState.h"			// プレイヤーの状態
 #include "EPlayerDirection.h"		// プレイヤーの向き
 #include "ETransformState.h"		// 変身時の状態
+#include "Gimmick/GimmickBase.h"
 #include "Change/Player/CharacterFormDataComponent.h"
 #include "MainCharacter.generated.h"
 
@@ -41,25 +42,50 @@ public:
 	// プレイヤーの移動処理
 	void UpdateMovement(const FVector2f& MovementVector);
 
+	// プレイヤーの向きを更新する
+	void UpdateDirection(const FVector2f& MovementVector);
+
 	// 猪に変身したときの処理
 	void UpdateTransformBoar();
 
 	// 兎に変身したときの処理
 	void UpdateTransformRabbit();
 
+	// 象に変身したときの処理
+	void UpdateTransformElephant();
+
 	// 変身状態を解除するときの処理
 	void UpdateTransformCancel();
 
+	// 能力を使用時の処理
 	void UpdateUseAbility();
 
-	// プレイヤーの向きを更新する
-	void UpdateDirection(const FVector2f& MovementVector);
+	// 能力が使用できるかチェック
+	bool UseAbilityCheck();
 
 	// 兎のアビリティ使用時の処理
 	void UpdateRabbitUbility();
 
-	//ジャンプ処理
+	// 象のアビリティ使用時の処理
+	void UpdateElephantUbility(float Deltatime);
+
+	// 潜水時の処理
+	void Diving();
+
+	// ジャンプ処理
 	void UpdateJump(float Deltatime);
+
+	// ダッシュ使用時の処理
+	void UpdateUseDash();
+
+	// ダッシュ中の処理
+	void UpdateDash(float Deltatime);
+
+	// ダッシュ中の処理
+	void UpdatePath(const FVector2f& MovementVector);
+
+	// 突撃中の処理
+	void UpdateCharge();
 
 	FVector Jump(FVector p1, FVector p2, FVector p3, float t);
 
@@ -80,7 +106,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
 	TSubclassOf<UPaperZDAnimInstance> AS_Ribbit;
 
-private:
+
 	// プレイヤーの状態
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	EPlayerState CurrentPlayerState;
@@ -91,7 +117,7 @@ private:
 
 	// 変身時の状態
 	ETransformState TransformState;
-
+private:
 	// 移動処理を行うためのコンポーネント
 	TObjectPtr<UCharacterMovementComponent> MovementComponent;
 
@@ -99,7 +125,7 @@ private:
 	TObjectPtr<UCharacterFormDataComponent> CharacterFormDataComponent;
 
 	UPROPERTY()
-	AActor* m_pLiftObject;					//持ち上げているオブジェクト情報
+	AGimmickBase* m_pLiftObject;					//持ち上げているオブジェクト情報
 	UPROPERTY()
 	float Alpha;
 
@@ -113,7 +139,10 @@ public:
 	UPROPERTY()
 	TObjectPtr<UPaperSpriteComponent> SpriteComponent;
 
-	void SetCanuesAbility(bool b_flg) { CanuesAbility = b_flg; }
+	// 移動制限を設定する
+	void SetMovementConstraint(const FVector2f& NewConstraint);
+
+	void SetPushingStone(bool b_flg) { bIsPushingStone = b_flg; }
 
 	bool GetIsUesAbility() { return m_bUesingAbility; }
 
@@ -122,26 +151,44 @@ public:
 		UE_LOG(LogTemp, Warning, TEXT("Stop"));
 	}
 	bool GetMove() { return StopMove; }
+
+	// 突撃中の処理
+	bool GetbChargeing() { return bDashing; }
+
+	// 荒地に入ってるか？
+	void SetintoOvergrownPath(bool intoOvergrownPath) 
+	{ bintovergrownPath = intoOvergrownPath; }
+
 private:
 	
 	// プレイヤー状態を更新する
 	void UpdatePlayerState();
+
+	// 各プレイヤーステータスの初期化
+	void InitPlayerStatus();
 
 	// 変身データを適用する
 	void ApplyCharacterFormData();
 	// アビリティを使用時のレイキャスト処理
 	void UpdateUesAbilityLine();
 
+	
+
 	FVector SetForwardVector(EPlayerDirection _playerdirection);
 
+	// ルームリセット時呼び出されるメソッド
+	void OnRoomReset(const FString& Message);
 private:
 	//アビリティ使用状態フラグ
 
 	bool m_bUesingAbility;
-	bool CanuesAbility;
+	bool bIsPushingStone;
 	bool StopMove;
 
 	EPlayerState PlayerState;
+
+	// 移動制限
+	FVector MovementConstraint;
 
 	FVector ForwardVector;
 	FVector m_posBeforeJump;
@@ -151,4 +198,22 @@ private:
 	FVector Start_Jump;
 	FVector Controlpoint_Jump;
 	FVector End_Jump;
+
+private:
+	// 能力使用に関係する諸々
+	// 猪関連
+	float DashGauge;		// ダッシュゲージ
+	bool bDashing;			// ダッシュ中か？
+	float DashTime;			// ダッシュ時間
+	float CurrentSpeed;		// 現在の速度
+	float MaxSpeed;			// 最高速度
+	bool bChargeing;		// 突撃中か？
+	UPROPERTY()
+	float ChargeThreshold;	// 突撃に入る閾値
+	bool bintovergrownPath;	// 荒地に入ってるか？
+
+	// 象関連
+	bool bDive;			// 潜り中か？
+	bool bDiving;
+
 };

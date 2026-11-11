@@ -7,4 +7,5 @@ enum class ETransformState : uint8
 	Human,
 	Boar,
 	Rabbit,
+	Elephant,
 };
