@@ -19,6 +19,7 @@ class CHANGE_API UGameFlowSubsystem : public UGameInstanceSubsystem
 	// --------------
 	const FName MainMenuName = "L_MainMenu";
 	const FName StargeSceneName = "L_StageScene";
+	const FName ClearSceneName = "L_ClearScene";
 
 public:
 	// サブシステムの初期化処理
@@ -37,4 +38,8 @@ private:
 
 	// ゲーム終了に関するイベントが送られたら呼び出されるメソッド
 	void OnGameEnd(const FString& EventMessage);
+
+	// メインメニューに遷移するボタンをキリックしたら呼び出されるメソッド
+	void OnToMainMenu(const FString& EventMessage);
+
 };
