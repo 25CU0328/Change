@@ -75,6 +75,22 @@ void AStageCamera::SetFollowTarget(AActor* NewTarget)
 void AStageCamera::SetRoom(ARoomBase* NewRoom)
 {
     CurrentRoom = NewRoom;
+
+    // ルームのタイルマップのバウンド
+    const FBox Bounds = CurrentRoom->GetTilemapBounds();
+    float NewCameraAspect = (Bounds.Max.X - Bounds.Min.X)/ (Bounds.Max.Z - Bounds.Min.Z);
+
+    Camera->SetAspectRatio(NewCameraAspect);
+    Camera->SetOrthoWidth((Bounds.Max.X - Bounds.Min.X));
+
+    // 位置をタイルマップ中央に設定する
+    FVector NewLocation = FVector(
+        (Bounds.Max.X + Bounds.Min.X) / 2.0,
+        GetActorLocation().Y,
+        (Bounds.Max.Z + Bounds.Min.Z) / 2.0
+    );
+
+    SetActorLocation(NewLocation);
 }
 
 void AStageCamera::Tick(float DeltaTime)
@@ -84,13 +100,13 @@ void AStageCamera::Tick(float DeltaTime)
     UpdateCameraPosition(DeltaTime);
 
     if (FadeInCounter > 0)
-    { 
+    {
         FadeInCounter -= DeltaTime;
 
         FadeInCounter = FMath::Clamp(FadeInCounter, 0.0f, FadeInDuration);
 
         UpdateFadeIn(1.0f - (FadeInCounter / FadeInDuration));
-    
+
         if (FadeInCounter == 0)
         {
             auto EventManager = GetGameInstance()->GetSubsystem<UGameEventSubsystem>();
@@ -140,22 +156,8 @@ FVector AStageCamera::GetClampedPosition(const FVector& Location) const
         return ReturnVector;
     }
 
-    
-
     // アスペクト比
-    float AspectRatio = 16.0f / 9.0f;
-
-    if (GEngine && GEngine->GameViewport)
-    {
-        FVector2D ViewportSize;
-
-        GEngine->GameViewport->GetViewportSize(ViewportSize);
-
-        if (ViewportSize.Y > 0.0f)
-        {
-            AspectRatio = ViewportSize.X / ViewportSize.Y;
-        }
-    }
+    float AspectRatio = (Bounds.Max.X - Bounds.Min.X) / (Bounds.Max.Z - Bounds.Min.Z);
 
     // 可視範囲の広さの半分
     float HalfViewportWidth = Camera->OrthoWidth * 0.5f;
@@ -203,7 +205,7 @@ FVector AStageCamera::GetClampedPosition(const FVector& Location) const
 // フェードイン効果の更新処理
 void AStageCamera::UpdateFadeIn(float Ratio)
 {
-    // 第一次呼叫時建立 MID，並加入此 Camera 的後處理 Blendables。
+    // マテリアル実体がないかのチェック
     if (!FadeInMID)
     {
         if (!FadeInMaterial)
@@ -286,7 +288,7 @@ void AStageCamera::UpdateFadeIn(float Ratio)
     // マテリアルインスタンスのAspect(アスペクト比)を設定する
     FadeInMID->SetScalarParameterValue(
         TEXT("Aspect"),
-        static_cast<float>(ViewportWidth) / 
+        static_cast<float>(ViewportWidth) /
         static_cast<float>(ViewportHeight)
     );
 }
