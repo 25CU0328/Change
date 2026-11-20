@@ -3,6 +3,8 @@
 
 #include "RoomPortal.h"
 #include "Change/Event/GameEventSubsystem.h"
+#include "Kismet/GameplayStatics.h"
+#include "RoomManager.h"
 
 // コンストラクタ
 ARoomPortal::ARoomPortal()
@@ -25,6 +27,10 @@ void ARoomPortal::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	BoxComponent->OnComponentBeginOverlap.AddDynamic(
+		this,
+		&ARoomPortal::OnBeginOverlap
+	);
 }
 
 // テレポートポイントを取得する
@@ -32,6 +38,14 @@ USceneComponent* ARoomPortal::GetTeleportPoint() const
 {
 	return TeleportPoint;
 }
+
+// このポータルが属するルームを取得する
+ARoomBase* ARoomPortal::GetOwnerRoom() const
+{
+	return OwnerRoom;
+}
+
+
 
 // 衝突開始時のコールバック
 UFUNCTION()
@@ -44,17 +58,30 @@ void ARoomPortal::OnBeginOverlap(
 	const FHitResult& SweepResult
 )
 {
+	UE_LOG(LogTemp, Warning, TEXT("OnBeginOverlap"));
 	// 他のアクターはプレイヤーでなければ処理しない
 	if (!OtherActor->ActorHasTag(FName("Player")))
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Not Player"));
 		return;
 	}
 
 	// テレポート先のポータルが設定されていなければ処理しない
 	if (!TargetPortal)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("No TargetPortal"));
 		return;
 	}
 
 	OtherActor->SetActorLocation(TargetPortal->GetTeleportPoint()->GetComponentLocation());
+
+	auto RoomManager = Cast<ARoomManager>(UGameplayStatics::GetActorOfClass(
+		GetWorld(),
+		ARoomManager::StaticClass()
+	));
+
+	if (RoomManager)
+	{
+		RoomManager->SetCurrentRoom(TargetPortal->GetOwnerRoom());
+	}
 }

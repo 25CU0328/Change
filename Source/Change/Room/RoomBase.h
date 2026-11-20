@@ -6,9 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "Engine/EngineTypes.h"
 
-#include "RoomStart.h"
-#include "RoomGoal.h"
 #include "PaperTileMapComponent.h"
+#include "PaperTileMapActor.h"
 
 #include "RoomBase.generated.h"
 
@@ -24,17 +23,14 @@ public:
 	// コンストラクタ
 	ARoomBase();
 
-protected:
 	// ゲーム開始時の処理
 	virtual void BeginPlay() override;
+protected:
+	
 
 	// ゲーム終了時処理
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 public:
-
-	// 出発点を取得する
-	FVector GetStartLocation();
-	
 	// タイルマップのバウンディングを取得する
 	FBox GetTilemapBounds() const;
 
@@ -47,11 +43,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Room")
 	TObjectPtr<UPaperTileMapComponent> Tilemap;
 
-	// ルームの出発点
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Anchor", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UChildActorComponent> StartPointComponent;
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Room")
+	TObjectPtr<APaperTileMapActor> TilemapActor;
 
-	// ルームの終点
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Anchor", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UChildActorComponent> GoalPointComponent;
+	// 初期化済みかどうかを示すフラグ
+	bool bIsInitialized = false;
 };

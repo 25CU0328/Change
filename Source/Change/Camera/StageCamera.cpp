@@ -27,7 +27,7 @@ AStageCamera::AStageCamera()
     Camera->OrthoWidth = 300.0f;
 
     FadeInCounter = 0.0f;
-    FadeInDuration = 2.0f;
+    FadeInDuration = 1.0f;
 }
 
 // ゲーム開始時または生成された時の処理
@@ -62,7 +62,7 @@ void AStageCamera::BeginPlay()
         &AStageCamera::OnFadeInStart
     );
 
-    UpdateFadeIn(1.0f);
+    // UpdateFadeIn(1.0f);
 }
 
 // ファローする対象を設定する
@@ -79,7 +79,8 @@ void AStageCamera::SetRoom(ARoomBase* NewRoom)
     // ルームのタイルマップのバウンド
     const FBox Bounds = CurrentRoom->GetTilemapBounds();
     float NewCameraAspect = (Bounds.Max.X - Bounds.Min.X)/ (Bounds.Max.Z - Bounds.Min.Z);
-
+    UE_LOG(LogTemp, Warning, TEXT("StageCamera Aspect Ratio: %f"), NewCameraAspect);
+    UE_LOG(LogTemp, Warning, TEXT("StageCamera Bounds: (%f, %f), (%f, %f)"), Bounds.Max.X, Bounds.Max.Z, Bounds.Min.X, Bounds.Min.Z);
     Camera->SetAspectRatio(NewCameraAspect);
     Camera->SetOrthoWidth((Bounds.Max.X - Bounds.Min.X));
 
@@ -91,6 +92,8 @@ void AStageCamera::SetRoom(ARoomBase* NewRoom)
     );
 
     SetActorLocation(NewLocation);
+
+    UE_LOG(LogTemp, Warning, TEXT("StageCamera SetRoom"));
 }
 
 void AStageCamera::Tick(float DeltaTime)
@@ -121,6 +124,7 @@ void AStageCamera::UpdateCameraPosition(float DeltaTime)
 {
     if (!Target || !CurrentRoom)
     {
+		UE_LOG(LogTemp, Warning, TEXT("StageCamera: Target or CurrentRoom is not set."));
         return;
     }
 

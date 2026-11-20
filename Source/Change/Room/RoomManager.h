@@ -24,22 +24,18 @@ public:
 
 	// プレイヤーを取得する
 	AMainCharacter* GetPlayer();
+
+	// 現在ルームを設定する
+	void SetCurrentRoom(ARoomBase* NewRoom);
 protected:
 	// ゲーム開始時の処理
 	virtual void BeginPlay() override;
 
 public:
-	// FRoomArrayDataを管理する配列
+	// 最初のルームを設定するための変数
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Room")
-	TArray<FRoomArrayData> RoomArrayDatas;
+	TObjectPtr<ARoomBase> InitialRoom;
 
-private:
-	// ルーム番号を表す変数
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Room", meta = (AllowPrivateAccess = "true"))
-	// データの番号
-	int CurrentDataIndex = 0;
-	// データ内の配列番号
-	int CurrentDataArrayIndex = 0;
 private:
 	// 現在ルーム
 	TObjectPtr<ARoomBase> CurrentRoom;
@@ -47,23 +43,4 @@ private:
 	TObjectPtr<AMainCharacter> Player;
 	// ステージ内カメラ
 	TObjectPtr<AStageCamera> StageCamera;
-	// --------------
-	// コールバック関数
-	// --------------
-private:
-	// ルームがクリアされた時呼び出されるメソッド
-	void OnRoomCleared(const FString& EventMessage);
-	// ルームをリセットしたい時呼び出されたメソッド
-	void OnResetRoom(const FString& EventMessage);
-	// ルームが全部クリアされたか
-	bool IsAllRoomCleared();
-
-private:
-	// ルームを生成する
-	void GenerateRoom();
-	// 現在ルームを削除する
-	void RemoveCurrentRoom();
-
-	
-
 };

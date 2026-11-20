@@ -3,9 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+
 #include "GameFramework/Actor.h"
 #include "Components/BoxComponent.h"
 #include "Components/SceneComponent.h"
+#include "RoomBase.h"
+
 #include "RoomPortal.generated.h"
 
 // ルーム間移動用のポータル
@@ -20,11 +23,11 @@ public:
 
 	// テレポートポイントを取得する
 	USceneComponent* GetTeleportPoint() const;
+
+	ARoomBase* GetOwnerRoom() const;
 protected:
 	// ゲーム開始時または生成された時の処理
 	virtual void BeginPlay() override;
-
-	
 
 	// 衝突開始時のコールバック
 	UFUNCTION()
@@ -45,6 +48,10 @@ protected:
 	// このポータルのテレポート位置
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<USceneComponent> TeleportPoint;
+
+	// このポータルが属するルーム
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<ARoomBase> OwnerRoom;
 
 	// テレポート先のポータル
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
