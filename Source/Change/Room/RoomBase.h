@@ -25,11 +25,16 @@ public:
 
 	// ゲーム開始時の処理
 	virtual void BeginPlay() override;
-protected:
-	
 
+	// リスポーンポイントを設定する
+	void SetRespawnPoint(const FVector& Location);
+protected:
 	// ゲーム終了時処理
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+	// プレイヤーがリスポーンしたときに呼ばれる関数
+	void OnPlayerRespawn(const FString& Message);
+
 public:
 	// タイルマップのバウンディングを取得する
 	FBox GetTilemapBounds() const;
@@ -40,11 +45,19 @@ protected:
 	TObjectPtr<ARoomManager> RoomManager;
 
 	// ルームのタイルマップ
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Room")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Room")
 	TObjectPtr<UPaperTileMapComponent> Tilemap;
 
+	// タイルマップを持つアクター
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Room")
 	TObjectPtr<APaperTileMapActor> TilemapActor;
+
+	// デフォルトのリスポーンポイント
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Room")
+	TObjectPtr<AActor> RespawnPointDummy;
+
+	// プレイヤーのリスポーンポイント
+	FVector PlayerRespawnPoint;
 
 	// 初期化済みかどうかを示すフラグ
 	bool bIsInitialized = false;

@@ -6,6 +6,7 @@
 #include "Components/ChildActorComponent.h"
 #include "Kismet/GameplayStatics.h"
 
+#include "Change/Event/GameEventSubsystem.h"
 // コンストラクタ
 ARoomBase::ARoomBase()
 {
@@ -26,23 +27,50 @@ void ARoomBase::BeginPlay()
 	{
 		if (ChildActor)
 		{
-			// 從子 Actor 身上尋找 PaperTileMapComponent
+			// タイルマップコンポーネントを持つ子アクターを探す
 			UPaperTileMapComponent* FoundComp = ChildActor->FindComponentByClass<UPaperTileMapComponent>();
 			if (FoundComp)
 			{
 				Tilemap = FoundComp;
-				break; // 找到第一個符合的就停止搜尋
+				break;
 			}
 		}
 	}
 
 	bIsInitialized = true;
+
+	if (RespawnPointDummy) {
+		PlayerRespawnPoint = RespawnPointDummy->GetActorLocation();
+	}
+
+	// イベントコールバックのバインド
+	auto EventManager = GetGameInstance()->GetSubsystem<UGameEventSubsystem>();
+	EventManager->Register(
+		EGameEvent::PlayerRespawn, 
+		this, 
+		&ARoomBase::OnPlayerRespawn
+	);
 }
 
 // ゲーム終了時処理
 void ARoomBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
+}
+
+// プレイヤーがリスポーンしたときに呼ばれる関数
+void ARoomBase::OnPlayerRespawn(const FString& Message)
+{
+	// プレイヤーを
+	AActor* PlayerActor = GetWorld()->GetFirstPlayerController()->GetPawn();
+
+	PlayerActor->SetActorLocation(PlayerRespawnPoint);
+}
+
+// リスポーンポイントを設定する
+void ARoomBase::SetRespawnPoint(const FVector& Location)
+{
+	PlayerRespawnPoint = Location;
 }
 
 // タイルマップのバウンディングを取得する

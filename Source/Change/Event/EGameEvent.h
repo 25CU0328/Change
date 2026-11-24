@@ -22,6 +22,8 @@ enum class EGameEvent : uint8
 
 	SwitchPressed,	// スウィッチが押された
 	SwitchReleased, // スウィッチが離された
+
+	PlayerRespawn, // プレイヤーリスポーン
 	// -------------
 	// UI Event
 	// --------------

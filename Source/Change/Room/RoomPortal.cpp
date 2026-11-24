@@ -5,6 +5,7 @@
 #include "Change/Event/GameEventSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "RoomManager.h"
+#include "RoomBase.h"
 
 // コンストラクタ
 ARoomPortal::ARoomPortal()
@@ -58,7 +59,6 @@ void ARoomPortal::OnBeginOverlap(
 	const FHitResult& SweepResult
 )
 {
-	UE_LOG(LogTemp, Warning, TEXT("OnBeginOverlap"));
 	// 他のアクターはプレイヤーでなければ処理しない
 	if (!OtherActor->ActorHasTag(FName("Player")))
 	{
@@ -83,5 +83,11 @@ void ARoomPortal::OnBeginOverlap(
 	if (RoomManager)
 	{
 		RoomManager->SetCurrentRoom(TargetPortal->GetOwnerRoom());
+
+		TargetPortal->GetOwnerRoom()->SetRespawnPoint(
+			TargetPortal->
+			GetTeleportPoint()->
+			GetComponentLocation()
+		);
 	}
 }
