@@ -102,7 +102,8 @@ private:
 	AActor* m_pLiftObject;					//持ち上げているオブジェクト情報
 	UPROPERTY()
 	float Alpha;
-
+	UPROPERTY(EditAnywhere, Category = "Jump")
+	float JumpDistance = 100.f;
 public:
 	// 現在の変身状態を返す
 	ETransformState GetTransformState() { return TransformState; }

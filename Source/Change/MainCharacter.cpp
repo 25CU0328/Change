@@ -1,6 +1,5 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "MainCharacter.h"
 #include "Kismet/KismetSystemLibrary.h" 
 #include "Kismet/GameplayStatics.h" 
@@ -45,7 +44,6 @@ AMainCharacter::AMainCharacter()
 // デストラクター
 AMainCharacter::~AMainCharacter()
 {
-
 }
 
 // ゲーム開始時の処理
@@ -117,7 +115,7 @@ void AMainCharacter::UpdateMovement(const FVector2f& MovementVector)
 
 	if (MovementVector.X != 0.0f)
 	{
-		if (MovementComponent->Velocity.Z != 0.0f)
+		if (MovementComponent->Velocity.Y != 0.0f)
 		{
 			// 移動を停止）
 			MovementComponent->StopMovementImmediately();
@@ -126,7 +124,7 @@ void AMainCharacter::UpdateMovement(const FVector2f& MovementVector)
 		if (m_bUesingAbility)
 		{
 			if ((MovementVector.X != MovementConstraint.X ||
-				MovementVector.Y != MovementConstraint.Z) &&
+				MovementVector.Y != MovementConstraint.Y) &&
 				MovementConstraint != FVector::ZeroVector
 			)
 			{
@@ -138,7 +136,7 @@ void AMainCharacter::UpdateMovement(const FVector2f& MovementVector)
 					MovementVector.X,
 					MovementVector.Y,
 					MovementConstraint.X,
-					MovementConstraint.Z
+					MovementConstraint.Y
 				);
 				return;
 			}
@@ -162,7 +160,7 @@ void AMainCharacter::UpdateMovement(const FVector2f& MovementVector)
 			if (m_bUesingAbility)
 			{
 				if ((MovementVector.X != MovementConstraint.X ||
-					MovementVector.Y != MovementConstraint.Z ) &&
+					MovementVector.Y != MovementConstraint.Y ) &&
 					MovementConstraint != FVector::ZeroVector
 					)
 				{
@@ -174,7 +172,7 @@ void AMainCharacter::UpdateMovement(const FVector2f& MovementVector)
 						MovementVector.X,
 						MovementVector.Y,
 						MovementConstraint.X,
-						MovementConstraint.Z
+						MovementConstraint.Y
 					);
 					return;
 				}
@@ -182,7 +180,7 @@ void AMainCharacter::UpdateMovement(const FVector2f& MovementVector)
 		}
 
 		// キャラクターの前方向に移動する
-		AddMovementInput(FVector(0, 0, 1), MovementVector.Y);
+		AddMovementInput(FVector(0, -1, 0), MovementVector.Y);
 	}
 }
 
@@ -190,7 +188,7 @@ void AMainCharacter::UpdateMovement(const FVector2f& MovementVector)
 // プレイヤーの向きを更新する
 void AMainCharacter::UpdateDirection(const FVector2f& MovementVector)
 {
-
+	UE_LOG(LogTemp, Warning, TEXT("UpdateDirection!"));
 	if (StopMove)
 	{
 		return;
@@ -248,7 +246,7 @@ void AMainCharacter::UpdatePlayerState()
 {
 	// 移動中かどうかで状態を更新する
 	if (!FMath::IsNearlyZero(MovementComponent->Velocity.X) ||
-		!FMath::IsNearlyZero(MovementComponent->Velocity.Z)
+		!FMath::IsNearlyZero(MovementComponent->Velocity.Y)
 		)
 	{
 		CurrentPlayerState = EPlayerState::Move;
@@ -347,96 +345,53 @@ void AMainCharacter::UpdateUseAbility()
 // 兎のアビリティ使用時の処理
 void AMainCharacter::UpdateRabbitUbility()
 {
-	USkeletalMeshComponent* pMeshComp = GetMesh();
-	if (pMeshComp != NULL)
+	// ジャンプ中の場合は処理しない
+	if (m_bJumping)
 	{
-		ForwardVector = SetForwardVector(PlayerDirection);
+		return;
+	}
 
-		//レイを飛ばす
-		//レイの始点はActorの位置
-		FVector Start = GetActorLocation();
-		//レイの終点はActorから前方向の一定距離
-		FVector End = GetActorLocation() + ForwardVector * 50.f;
+	// キャラクターの向きに対応する方向ベクトルを取得
+	ForwardVector = SetForwardVector(PlayerDirection);
 
-		//デバッグ確認用のラインを描画
-		// DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 5.0f);
-
-		End.Y = Start.Y;
-
-		//コリジョン判定で無視する項目を指定（今回はこのActor自分自身。thisポインタで指定）
-		FCollisionQueryParams CollisionParams;
-		CollisionParams.AddIgnoredActor(this);
-
-		//ヒットした（＝コリジョン判定を受けた）オブジェクトを格納する変数
-		FHitResult OutHit;
-
-		//レイを飛ばし、全てのオブジェクトに対してコリジョン判定を行う
-		//isHitは、ヒットした場合にtrueになる
-		bool isHit = GetWorld()->LineTraceSingleByChannel(OutHit, Start, End,
-			ECC_WorldStatic, CollisionParams);
-
-		//ヒットするオブジェクトがある場合
-		if (isHit)
+	// 現在位置を指定
+	Start_Jump = GetActorLocation();
+	// 現在位置とスプライトサイズと方向ベクトルを計算し着地点を計算
+	End_Jump = GetActorLocation() + JumpDistance * ForwardVector;
+	
+	// ジャンプ先までの経路に障害物があるかどうかの確認
+	// 障害物がある場合、は着地点を障害物の手前に設定する
+	{
+		FHitResult Hit;
+		FCollisionQueryParams Params;
+		Params.AddIgnoredActor(this);
+		const float CheckRadius = 10.0f;
+		bool bHit = GetWorld()->SweepSingleByChannel(
+			Hit,
+			Start_Jump,
+			End_Jump,
+			FQuat::Identity,
+			ECC_Visibility,
+			FCollisionShape::MakeSphere(CheckRadius),
+			Params
+		);
+		if (bHit)
 		{
-			//今ヒットしたActorが、ギミックオブジェクトActorの場合
-			if (OutHit.GetActor()->ActorHasTag("Stone") || OutHit.GetActor()->ActorHasTag("Mizo"))
-			{
-				UPaperSpriteComponent* HitBoxComp = Cast<UPaperSpriteComponent>(OutHit.GetComponent());
-
-				if (HitBoxComp)
-				{
-					UE_LOG(LogTemp, Warning, TEXT("Rabbit Ablity"));
-					// 現在向いてる方向のベクトル取得
-					ForwardVector = SetForwardVector(PlayerDirection);
-					// ヒットしたアクターのスプライト取得
-					UPaperSprite* Sprite = HitBoxComp->GetSprite();
-					// 取得したスプライトサイズを取得
-					FVector2D ActorScale = FVector2D(
-						OutHit.GetActor()->GetActorScale().X,
-						OutHit.GetActor()->GetActorScale().Z
-					);
-
-					const FBoxSphereBounds Bounds = Sprite->GetRenderBounds();
-					const FVector SpriteSize = Bounds.BoxExtent * 2.0f;
-
-					FVector2D HitBox_Size = FVector2D(
-						SpriteSize.X * ActorScale.X,
-						SpriteSize.Z * ActorScale.Y
-					);
-
-					// 取得したサイズをFVectorに変換
-					FVector Ends = FVector(HitBox_Size.X / 1.f, 5.f, HitBox_Size.Y / 1.f);
-					// 現在位置を指定
-					Start_Jump = GetActorLocation();
-					// 現在位置とスプライトサイズと方向ベクトルを計算し着地点を計算
-					End_Jump = GetActorLocation() + Ends * 1.1f * ForwardVector;
-					// スタートとエンドからコントロールポイントを計算
-					Controlpoint_Jump = FVector(
-						(Start_Jump.X + (End_Jump.X - Start_Jump.X) / 2.f),
-						(Start_Jump.Y + End_Jump.Y) + 2.f
-						, (Start_Jump.Z + (End_Jump.Z - Start_Jump.Z) / 2.f)
-					) + 10.f;
-
-					// ジャンプフラグをtrueにする
-					m_bJumping = true;
-					Alpha = 0.f;
-				}
-				else
-				{
-					UE_LOG(LogTemp, Warning, TEXT("Not find"));
-				}
-			}
-			else
-			{
-				UE_LOG(LogTemp, Warning, TEXT("not Stone"));
-			}
-
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Rabbut not Ablity"));
+			// 着地点を障害物の手前に設定
+			End_Jump = Hit.Location - ForwardVector * CheckRadius;
 		}
 	}
+
+	// スタートとエンドからコントロールポイントを計算
+	Controlpoint_Jump = FVector(
+		(Start_Jump.X + FMath::Abs(End_Jump.Y - Start_Jump.Y) * 0.67f),
+		(Start_Jump.Y - FMath::Abs(End_Jump.X - Start_Jump.X) * 0.67f),
+		Start_Jump.Z + 2.0f
+	) + 10.0f;
+
+	// ジャンプフラグをtrueにする
+	m_bJumping = true;
+	Alpha = 0.f;
 }
 
 FVector AMainCharacter::SetForwardVector(EPlayerDirection _playerdirection)
@@ -445,10 +400,10 @@ FVector AMainCharacter::SetForwardVector(EPlayerDirection _playerdirection)
 	switch (_playerdirection)
 	{
 	case EPlayerDirection::Up:
-		vector = FVector(0, 0, 1);
+		vector = FVector(0, -1, 0);
 		break;
 	case EPlayerDirection::Down:
-		vector = FVector(0, 0, -1);
+		vector = FVector(0, 1, 0);
 		break;
 	case EPlayerDirection::Right:
 		vector = FVector(1, 0, 0);
@@ -504,5 +459,5 @@ FVector AMainCharacter::Jump(FVector p1, FVector p2, FVector p3, float t)
 // 移動制限を設定する
 void AMainCharacter::SetMovementConstraint(const FVector2f& NewConstraint)
 {
-	MovementConstraint = FVector(NewConstraint.X, 0.0f, NewConstraint.Y);
+	MovementConstraint = FVector(NewConstraint.X, NewConstraint.Y, 0.0f);
 }

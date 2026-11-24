@@ -37,6 +37,12 @@ protected:
     UPROPERTY(EditAnywhere, Category = "Camera")
     float FollowSpeed = 5.0f;
 
+    UPROPERTY(EditAnywhere, Category = "Camera")
+    float Gradient = 200.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Camera")
+    float DisplayRange = 128.0f;
+
     UPROPERTY()
     TObjectPtr<AActor> Target;
 

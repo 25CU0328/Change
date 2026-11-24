@@ -62,7 +62,28 @@ void AStageCamera::BeginPlay()
         &AStageCamera::OnFadeInStart
     );
 
-    // UpdateFadeIn(1.0f);
+    // マテリアル実体がないかのチェック
+    if (!FadeInMID)
+    {
+        if (!FadeInMaterial)
+        {
+            UE_LOG(
+                LogTemp,
+                Warning,
+                TEXT("StageCamera: RevealMaterial has not been assigned.")
+            );
+            return;
+        }
+
+        FadeInMID = UMaterialInstanceDynamic::Create(FadeInMaterial, this);
+
+        if (!FadeInMID)
+        {
+            return;
+        }
+
+        Camera->AddOrUpdateBlendable(FadeInMID, 1.0f);
+    }
 }
 
 // ファローする対象を設定する
@@ -78,17 +99,17 @@ void AStageCamera::SetRoom(ARoomBase* NewRoom)
 
     // ルームのタイルマップのバウンド
     const FBox Bounds = CurrentRoom->GetTilemapBounds();
-    float NewCameraAspect = (Bounds.Max.X - Bounds.Min.X)/ (Bounds.Max.Z - Bounds.Min.Z);
+    float NewCameraAspect = 16.0f / 9.0f; // (Bounds.Max.X - Bounds.Min.X)/ (Bounds.Max.Y - Bounds.Min.Y);
     UE_LOG(LogTemp, Warning, TEXT("StageCamera Aspect Ratio: %f"), NewCameraAspect);
-    UE_LOG(LogTemp, Warning, TEXT("StageCamera Bounds: (%f, %f), (%f, %f)"), Bounds.Max.X, Bounds.Max.Z, Bounds.Min.X, Bounds.Min.Z);
+    UE_LOG(LogTemp, Warning, TEXT("StageCamera Bounds: (%f, %f), (%f, %f)"), Bounds.Max.X, Bounds.Max.Y, Bounds.Min.X, Bounds.Min.Y);
     Camera->SetAspectRatio(NewCameraAspect);
     Camera->SetOrthoWidth((Bounds.Max.X - Bounds.Min.X));
 
     // 位置をタイルマップ中央に設定する
     FVector NewLocation = FVector(
         (Bounds.Max.X + Bounds.Min.X) / 2.0,
-        GetActorLocation().Y,
-        (Bounds.Max.Z + Bounds.Min.Z) / 2.0
+        (Bounds.Max.Y + Bounds.Min.Y) / 2.0,
+        GetActorLocation().Z
     );
 
     SetActorLocation(NewLocation);
@@ -101,6 +122,8 @@ void AStageCamera::Tick(float DeltaTime)
     Super::Tick(DeltaTime);
 
     UpdateCameraPosition(DeltaTime);
+
+    UpdateFadeIn(0.0f);
 
     if (FadeInCounter > 0)
     {
@@ -128,7 +151,7 @@ void AStageCamera::UpdateCameraPosition(float DeltaTime)
         return;
     }
 
-    FVector DesiredLocation = Target->GetActorLocation();
+    /*FVector DesiredLocation = Target->GetActorLocation();
 
     FVector NewLocation = FMath::VInterpTo(
         GetActorLocation(),
@@ -138,7 +161,9 @@ void AStageCamera::UpdateCameraPosition(float DeltaTime)
     );
     NewLocation = GetClampedPosition(NewLocation);
 
-    SetActorLocation(NewLocation);
+    SetActorLocation(NewLocation);*/
+
+    SetActorLocation(GetClampedPosition(Target->GetActorLocation()));
 }
 
 // クランプされたカメラ位置を取得する
@@ -161,7 +186,7 @@ FVector AStageCamera::GetClampedPosition(const FVector& Location) const
     }
 
     // アスペクト比
-    float AspectRatio = (Bounds.Max.X - Bounds.Min.X) / (Bounds.Max.Z - Bounds.Min.Z);
+    float AspectRatio = 16.0f / 9.0f; // (Bounds.Max.X - Bounds.Min.X) / (Bounds.Max.Y - Bounds.Min.Y);
 
     // 可視範囲の広さの半分
     float HalfViewportWidth = Camera->OrthoWidth * 0.5f;
@@ -172,8 +197,8 @@ FVector AStageCamera::GetClampedPosition(const FVector& Location) const
     const float MinX = Bounds.Min.X;
     const float MaxX = Bounds.Max.X;
 
-    const float MinZ = Bounds.Min.Z;
-    const float MaxZ = Bounds.Max.Z;
+    const float MinY = Bounds.Min.Y;
+    const float MaxY = Bounds.Max.Y;
 
     // X軸調整
     if (MaxX - MinX <= HalfViewportWidth * 2.0f)
@@ -189,19 +214,22 @@ FVector AStageCamera::GetClampedPosition(const FVector& Location) const
         );
     }
 
-    // Z軸調整
-    if (MaxZ - MinZ <= HalfViewporHeight * 2.0f)
+    // Y軸調整
+    if (MaxY - MinY <= HalfViewporHeight * 2.0f)
     {
-        ReturnVector.Z = (MinZ + MaxZ) * 0.5f;
+        ReturnVector.Y = (MinY + MaxY) * 0.5f;
     }
     else
     {
-        ReturnVector.Z = FMath::Clamp(
-            ReturnVector.Z,
-            MinZ + HalfViewporHeight,
-            MaxZ - HalfViewporHeight
+        ReturnVector.Y = FMath::Clamp(
+            ReturnVector.Y,
+            MinY + HalfViewporHeight,
+            MaxY - HalfViewporHeight
         );
     }
+
+	// Z軸はそのまま
+	ReturnVector.Z = GetActorLocation().Z;
 
     return ReturnVector;
 }
@@ -209,28 +237,7 @@ FVector AStageCamera::GetClampedPosition(const FVector& Location) const
 // フェードイン効果の更新処理
 void AStageCamera::UpdateFadeIn(float Ratio)
 {
-    // マテリアル実体がないかのチェック
-    if (!FadeInMID)
-    {
-        if (!FadeInMaterial)
-        {
-            UE_LOG(
-                LogTemp,
-                Warning,
-                TEXT("StageCamera: RevealMaterial has not been assigned.")
-            );
-            return;
-        }
-
-        FadeInMID = UMaterialInstanceDynamic::Create(FadeInMaterial, this);
-
-        if (!FadeInMID)
-        {
-            return;
-        }
-
-        Camera->AddOrUpdateBlendable(FadeInMID, 1.0f);
-    }
+   
 
     APlayerController* PlayerController =
         GetWorld() ? GetWorld()->GetFirstPlayerController() : nullptr;
@@ -246,54 +253,73 @@ void AStageCamera::UpdateFadeIn(float Ratio)
     }
 
     // プレイヤー位置をスクリーン空間に投影する
+    
+    int32 ViewportWidth = 0;
+    int32 ViewportHeight = 0;
+    APawn* PlayerPawn = PlayerController->GetPawn();
+    const FVector PlayerPos = PlayerPawn->GetActorLocation();
+    
     FVector2D ScreenPosition;
-    if (!PlayerController->ProjectWorldLocationToScreen(
-        Target->GetActorLocation(),
-        ScreenPosition)
-        )
+    const bool bProjected = PlayerController->ProjectWorldLocationToScreen(
+        PlayerPos,
+        ScreenPosition
+    );
+
+    if (!bProjected)
     {
-        UE_LOG(
-            LogTemp,
-            Warning,
-            TEXT("StageCamera: Failed to ProjectWorldLocationToScreen")
-        );
         return;
     }
 
-    int32 ViewportWidth = 0;
-    int32 ViewportHeight = 0;
-    PlayerController->GetViewportSize(ViewportWidth, ViewportHeight);
+    PlayerController->GetViewportSize(
+        ViewportWidth,
+        ViewportHeight
+    );
+    if (ViewportWidth <= 0 || ViewportHeight <= 0)
+    {
+        return;
+    }
 
-    // 正規化した座標に転換する
-    const float NormalizedScreenX = FMath::Clamp(
+    
+    const FVector2D PlayerUV(
         ScreenPosition.X / static_cast<float>(ViewportWidth),
-        0.0f,
-        1.0f
+        ScreenPosition.Y / static_cast<float>(ViewportHeight)
     );
 
-    const float NormalizedScreenY = FMath::Clamp(
-        ScreenPosition.Y / static_cast<float>(ViewportHeight),
-        0.0f,
-        1.0f
-    );
+    const float AspectRatio =
+        16.0f / 9.0f;
 
-    // マテリアルインスタンスのScreenUVを設定する
+	// 正投影カメラの幅を取得する
+    const float OrthoWidth = Camera->OrthoWidth;
+
     FadeInMID->SetVectorParameterValue(
-        TEXT("ScreenUV"),
-        FLinearColor(NormalizedScreenX, NormalizedScreenY, 0.0f, 0.0f)
+        TEXT("PlayerScreenPosition"),
+        FLinearColor(
+            PlayerUV.X,
+            PlayerUV.Y,
+            0.0f,
+            0.0f
+        )
     );
 
-    // マテリアルインスタンスのRatio()を設定する
+    // 
     FadeInMID->SetScalarParameterValue(
-        TEXT("Ratio"),
-        FMath::Clamp(Ratio, 0.0f, 1.0f)
+        TEXT("Gradient"),
+        Gradient
     );
 
-    // マテリアルインスタンスのAspect(アスペクト比)を設定する
     FadeInMID->SetScalarParameterValue(
-        TEXT("Aspect"),
-        static_cast<float>(ViewportWidth) /
-        static_cast<float>(ViewportHeight)
+        TEXT("DisplayRange"),
+        DisplayRange
+    );
+
+    FadeInMID->SetScalarParameterValue(
+        TEXT("OrthoWidth"),
+        OrthoWidth
+    );
+
+    FadeInMID->SetScalarParameterValue(
+        TEXT("AspectRatio"),
+        AspectRatio
     );
 }
 

@@ -88,13 +88,13 @@ void AStone::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherAc
 			{
 				FVector2f DirectionVector = FVector2f(
 					GetActorLocation().X - OtherActor->GetActorLocation().X,
-					GetActorLocation().Z - OtherActor->GetActorLocation().Z
+					GetActorLocation().Y - OtherActor->GetActorLocation().Y
 				);
 				DirectionVector.Normalize();
 
 				FVector2f ConstaintDirection = FMath::Abs(DirectionVector.X) >= FMath::Abs(DirectionVector.Y) ?
 					FVector2f(DirectionVector.X / FMath::Abs(DirectionVector.X), 0) :
-					FVector2f(0, DirectionVector.Y / FMath::Abs(DirectionVector.Y));
+					FVector2f(0, -DirectionVector.Y / FMath::Abs(DirectionVector.Y));
 
 				m_pPlayerChara->SetMovementConstraint(ConstaintDirection);
 
