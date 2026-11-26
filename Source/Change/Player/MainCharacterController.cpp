@@ -111,6 +111,20 @@ void AMainCharacterController::SetupInputComponent()
 		);
 	}
 
+	// 熊に変身のIAが設定された場合
+	if (IA_TransformBear)
+	{
+		// ボタンが押された瞬間
+		EnhancedInputComponent->BindAction(
+			IA_TransformBear,
+			ETriggerEvent::Started,
+			this,
+			&AMainCharacterController::OnIA_TransformBear
+		);
+		
+	}
+	else UE_LOG(LogTemp, Error, TEXT("not find bear"));
+
 	// 変身の解除のIAが設定された場合
 	if (IA_TransformCancel)
 	{
@@ -133,6 +147,19 @@ void AMainCharacterController::SetupInputComponent()
 			this,
 			&AMainCharacterController::OnIA_UseAbility
 		);
+	}
+
+	// ダッシュ使用のIAが設定された場合
+	if (IA_UseDash)
+	{
+		// ボタンが押された瞬間 (Started)
+		EnhancedInputComponent->BindAction(
+			IA_UseDash,
+			ETriggerEvent::Ongoing,
+			this,
+			&AMainCharacterController::OnIA_UseDash
+		);
+		
 	}
 }
 
@@ -179,6 +206,16 @@ void AMainCharacterController::OnIA_TransformRabbit()
 	MainCharacter->UpdateTransformRabbit();
 }
 
+// 熊に変身するボタンが押されたら呼び出される関数
+void AMainCharacterController::OnIA_TransformBear()
+{
+	// 入力を受け付けないと設定する場合、処理しない
+	if (!bEnableInput)
+		return;
+
+	MainCharacter->UpdateTransformBear();
+}
+
 // 変身を解除するボタンが押されたら呼び出される関数
 void AMainCharacterController::OnIA_TransformCancel()
 {
@@ -196,9 +233,17 @@ void AMainCharacterController::OnIA_UseAbility()
 	if (!bEnableInput)
 		return;
 
-	//UGameEventSubsystem* pEventSubsystem = Cast<UGameEventSubsystem>(GetGameInstance());
-	//pEventSubsystem->SendEvent(EGameEvent::UseAbility, "UseAbility");
 	MainCharacter->UpdateUseAbility();
+}
+
+// ダッシュ使用ボタンが押されたら呼び出される関数
+void AMainCharacterController::OnIA_UseDash()
+{
+	// 入力を受け付けないと設定する場合、処理しない
+	if (!bEnableInput)
+		return;
+
+	MainCharacter->UpdateUseDash();
 }
 
 // フェードイン開始時呼び出されるメソッド

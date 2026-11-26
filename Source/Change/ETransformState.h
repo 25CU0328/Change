@@ -6,5 +6,6 @@ enum class ETransformState : uint8
 	None,
 	Human,
 	Boar,
+	Bear,
 	Rabbit,
 };

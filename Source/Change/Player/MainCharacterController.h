@@ -47,6 +47,10 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	UInputAction* IA_TransformRabbit;
 
+	// 熊に変形のするIA
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	UInputAction* IA_TransformBear;
+
 	// 変身を解除のするIA
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	UInputAction* IA_TransformCancel;
@@ -54,6 +58,10 @@ private:
 	// 能力使用のIA
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
 	UInputAction* IA_UseAbility;
+
+	// ダッシュ使用のIA
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input", meta = (AllowPrivateAccess = "true"))
+	UInputAction* IA_UseDash;
 
 	AMainCharacter* MainCharacter; // プレイヤー
 
@@ -76,6 +84,10 @@ private:
 	UFUNCTION()
 	void OnIA_TransformRabbit();
 
+	// 熊に変身するボタンが押されたら呼び出される関数
+	UFUNCTION()
+	void OnIA_TransformBear();
+
 	// 変身を解除するボタンが押されたら呼び出される関数
 	UFUNCTION()
 	void OnIA_TransformCancel();
@@ -83,6 +95,10 @@ private:
 	// 能力使用ボタンが押されたら呼び出される関数
 	UFUNCTION()
 	void OnIA_UseAbility();
+
+	// ダッシュ使用ボタンが押されたら呼び出される関数
+	UFUNCTION()
+	void OnIA_UseDash();
 
 	// ------------
 	// Event Callback
