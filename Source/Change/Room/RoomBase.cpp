@@ -20,22 +20,29 @@ void ARoomBase::BeginPlay()
 
 	Super::BeginPlay();
 
-	TArray<AActor*> AttachedActors;
-	GetAttachedActors(AttachedActors);
+	TArray<UChildActorComponent*> AttachedChildActors;
+	GetComponents<UChildActorComponent>(
+		AttachedChildActors
+	);
 
-	for (AActor* ChildActor : AttachedActors)
+	for (UChildActorComponent* ChildComponent : AttachedChildActors)
 	{
-		if (ChildActor)
+		if (ChildComponent)
 		{
-			// タイルマップコンポーネントを持つ子アクターを探す
-			UPaperTileMapComponent* FoundComp = ChildActor->FindComponentByClass<UPaperTileMapComponent>();
-			if (FoundComp)
+			AActor* ChildActor = ChildComponent->GetChildActor();
+
+			if (ChildActor)
 			{
-				Tilemap = FoundComp;
-				break;
+				FVector Location = ChildActor->GetActorLocation();
+				ChildInitPositions.Add(
+					ChildComponent,
+					ChildComponent->GetChildActor()->GetActorLocation()
+				);
 			}
 		}
 	}
+
+	Tilemap = TilemapActor->GetRenderComponent();
 
 	bIsInitialized = true;
 
@@ -65,6 +72,42 @@ void ARoomBase::OnPlayerRespawn(const FString& Message)
 	AActor* PlayerActor = GetWorld()->GetFirstPlayerController()->GetPawn();
 
 	PlayerActor->SetActorLocation(PlayerRespawnPoint);
+}
+
+// ルームをリセットされた時呼び出される関数
+void ARoomBase::ResetRoom()
+{
+	UE_LOG(LogTemp, Warning, TEXT("ResetRoom called for %s"), *GetName());
+	// 子アクターの位置を初期位置にリセット
+	for (const auto& Pair : ChildInitPositions)
+	{
+		UChildActorComponent* ChildComponent = Pair.Key;
+
+		if (!IsValid(ChildComponent))
+		{
+			continue;
+		}
+
+		AActor* ChildActor = ChildComponent->GetChildActor();
+		UE_LOG(LogTemp, Warning, TEXT("ChildActor %s is Reset"), *ChildActor->GetName());
+		if (!IsValid(ChildActor))
+		{
+			continue;
+		}
+
+		const FVector& InitialPosition = Pair.Value;
+
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("ResetActor Position %s"),
+			*ChildActor->GetName()
+		);
+
+		ChildActor->SetActorLocation(InitialPosition);
+	}
+
+	OnPlayerRespawn("");
 }
 
 // リスポーンポイントを設定する

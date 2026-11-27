@@ -9,6 +9,7 @@
 #include "EPlayerState.h"			// プレイヤーの状態
 #include "EPlayerDirection.h"		// プレイヤーの向き
 #include "ETransformState.h"		// 変身時の状態
+#include "Gimmick/GimmickBase.h"
 #include "Change/Player/CharacterFormDataComponent.h"
 #include "MainCharacter.generated.h"
 
@@ -41,25 +42,41 @@ public:
 	// プレイヤーの移動処理
 	void UpdateMovement(const FVector2f& MovementVector);
 
+	// プレイヤーの向きを更新する
+	void UpdateDirection(const FVector2f& MovementVector);
+
 	// 猪に変身したときの処理
 	void UpdateTransformBoar();
 
 	// 兎に変身したときの処理
 	void UpdateTransformRabbit();
 
+	// 熊に変身したときの処理
+	void UpdateTransformBear();
+
 	// 変身状態を解除するときの処理
 	void UpdateTransformCancel();
 
+	// 能力を使用時の処理
 	void UpdateUseAbility();
 
-	// プレイヤーの向きを更新する
-	void UpdateDirection(const FVector2f& MovementVector);
+	// 能力が使用できるかチェック
+	bool UseAbilityCheck();
 
 	// 兎のアビリティ使用時の処理
 	void UpdateRabbitUbility();
 
-	//ジャンプ処理
+	// ジャンプ処理
 	void UpdateJump(float Deltatime);
+
+	// ダッシュ使用時の処理
+	void UpdateUseDash();
+
+	// ダッシュ中の処理
+	void UpdateDash(float Deltatime);
+
+	// 突撃中の処理
+	void UpdateCharge();
 
 	FVector Jump(FVector p1, FVector p2, FVector p3, float t);
 
@@ -99,7 +116,7 @@ private:
 	TObjectPtr<UCharacterFormDataComponent> CharacterFormDataComponent;
 
 	UPROPERTY()
-	AActor* m_pLiftObject;					//持ち上げているオブジェクト情報
+	AGimmickBase* m_pLiftObject;					//持ち上げているオブジェクト情報
 	UPROPERTY()
 	float Alpha;
 	UPROPERTY(EditAnywhere, Category = "Jump")
@@ -126,6 +143,7 @@ public:
 		UE_LOG(LogTemp, Warning, TEXT("Stop"));
 	}
 	bool GetMove() { return StopMove; }
+
 private:
 	
 	// プレイヤー状態を更新する
@@ -137,12 +155,9 @@ private:
 	// 変身データを適用する
 	void ApplyCharacterFormData();
 	// アビリティを使用時のレイキャスト処理
-	void UpdateUesAbilityLine();
+	// void UpdateUesAbilityLine();
 
-	
-
-
-	FVector SetForwardVector(EPlayerDirection _playerdirection);
+	FVector GetForwardVector(EPlayerDirection _playerdirection);
 
 	// ルームリセット時呼び出されるメソッド
 	void OnRoomReset(const FString& Message);
@@ -166,4 +181,20 @@ private:
 	FVector Start_Jump;
 	FVector Controlpoint_Jump;
 	FVector End_Jump;
+
+private:
+	// 能力使用に関係する諸々
+	// 猪関連
+	float DashGauge;		// ダッシュゲージ
+	bool bDashing;			// ダッシュ中か？
+	float DashTime;			// ダッシュ時間
+	float CurrentSpeed;		// 現在の速度
+	float MaxSpeed;			// 最高速度
+	bool bChargeing;		// 突撃中か？
+	UPROPERTY()
+	float ChargeThreshold;	// 突撃に入る閾値
+
+	// 象関連
+	
+
 };

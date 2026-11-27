@@ -36,6 +36,12 @@ AMainCharacter::AMainCharacter()
 	, Start_Jump(0, 0, 0)
 	, Controlpoint_Jump(0, 0, 0)
 	, End_Jump(0, 0, 0)
+	, DashGauge(0.f)
+	, bDashing(false)
+	, DashTime(0.f)
+	, CurrentSpeed(0.f)
+	, bChargeing(false)
+	, ChargeThreshold(70.f)
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -89,7 +95,15 @@ void AMainCharacter::Tick(float DeltaTime)
 	// 状態の更新
 	UpdatePlayerState();
 
+	// ジャンプの更新
 	UpdateJump(DeltaTime);
+
+	// ダッシュの更新
+	UpdateDash(DeltaTime);
+
+	// 突撃中の更新
+	UpdateCharge();
+
 }
 
 // Called to bind functionality to input
@@ -276,8 +290,8 @@ void AMainCharacter::ApplyCharacterFormData()
 	// アニメーションインスタンスを設定する
 	AnimationComponent->SetAnimInstanceClass(Data.AnimationInstance);
 
-	MovementComponent->BrakingDecelerationFlying = Data.Deceleration;
-	MovementComponent->MaxFlySpeed = Data.MaxSpeed;
+	MovementComponent->MaxWalkSpeed = Data.WalkMaxSpeed;
+	MovementComponent->BrakingDecelerationWalking = Data.Deceleration;
 	MovementComponent->MaxAcceleration = Data.Acceleration;
 }
 
@@ -305,6 +319,18 @@ void AMainCharacter::UpdateTransformRabbit()
 	ApplyCharacterFormData();
 }
 
+// 熊に変身したときの処理
+void AMainCharacter::UpdateTransformBear()
+{
+	if (m_bJumping || bIsPushingStone)
+		return;
+
+	TransformState = ETransformState::Bear;
+
+	// 変身後のデータを適用する
+	ApplyCharacterFormData();
+}
+
 // 変身状態を解除するときの処理
 void AMainCharacter::UpdateTransformCancel()
 {
@@ -324,6 +350,10 @@ void AMainCharacter::UpdateUseAbility()
 	{
 		UpdateRabbitUbility();
 	}
+	else if (TransformState == ETransformState::Boar)
+	{
+		UseAbilityCheck();
+	}
 
 	if (!bIsPushingStone) {
 		//デバッグ確認用
@@ -342,6 +372,73 @@ void AMainCharacter::UpdateUseAbility()
 	}
 }
 
+// 能力が使用できるかチェック
+bool AMainCharacter::UseAbilityCheck()
+{
+
+	bool Check = false;
+	USkeletalMeshComponent* pMeshComp = GetMesh();
+	if (pMeshComp != NULL)
+	{
+		ForwardVector = GetForwardVector(PlayerDirection);
+
+		//レイを飛ばす
+		//レイの始点はActorの位置
+		FVector Start = GetActorLocation();
+		//レイの終点はActorから前方向の一定距離
+		FVector End = GetActorLocation() + ForwardVector * 50.f;
+
+		//デバッグ確認用のラインを描画
+		//DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 5.0f);
+
+		End.Y = Start.Y;
+
+		//コリジョン判定で無視する項目を指定（今回はこのActor自分自身。thisポインタで指定）
+		FCollisionQueryParams CollisionParams;
+		CollisionParams.AddIgnoredActor(this);
+
+		//ヒットした（＝コリジョン判定を受けた）オブジェクトを格納する変数
+		FHitResult OutHit;
+
+		//レイを飛ばし、全てのオブジェクトに対してコリジョン判定を行う
+		//isHitは、ヒットした場合にtrueになる
+		bool isHit = GetWorld()->LineTraceSingleByChannel(OutHit, Start, End,
+			ECC_WorldStatic, CollisionParams);
+		//ヒットするオブジェクトがある場合
+		if (isHit)
+		{
+			//今ヒットしたActorが、持ち上げられるオブジェクトActorの場合
+			if (OutHit.GetActor()->ActorHasTag("Gimmick"))
+			{
+				UPaperSpriteComponent* HitBoxComp = Cast<UPaperSpriteComponent>(OutHit.GetComponent());
+
+				if (HitBoxComp)
+				{
+					AGimmickBase* pLiftObject = Cast<AGimmickBase>(OutHit.GetActor());
+					Check = pLiftObject->IsAnimalcheck(TransformState);
+					pLiftObject->Gimmick();
+				}
+				else
+				{
+					UE_LOG(LogTemp, Warning, TEXT("Not find"));
+				}
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("not gimmick"));
+			}
+
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Rabbut not Ablity"));
+		}
+
+
+	}
+	return Check;
+}
+
 // 兎のアビリティ使用時の処理
 void AMainCharacter::UpdateRabbitUbility()
 {
@@ -352,20 +449,21 @@ void AMainCharacter::UpdateRabbitUbility()
 	}
 
 	// キャラクターの向きに対応する方向ベクトルを取得
-	ForwardVector = SetForwardVector(PlayerDirection);
+	ForwardVector = GetForwardVector(PlayerDirection);
 
 	// 現在位置を指定
 	Start_Jump = GetActorLocation();
 	// 現在位置とスプライトサイズと方向ベクトルを計算し着地点を計算
 	End_Jump = GetActorLocation() + JumpDistance * ForwardVector;
-	
+
 	// ジャンプ先までの経路に障害物があるかどうかの確認
 	// 障害物がある場合、は着地点を障害物の手前に設定する
 	{
 		FHitResult Hit;
 		FCollisionQueryParams Params;
 		Params.AddIgnoredActor(this);
-		const float CheckRadius = 10.0f;
+
+		const float CheckRadius = 5.0f;
 		bool bHit = GetWorld()->SweepSingleByChannel(
 			Hit,
 			Start_Jump,
@@ -377,6 +475,7 @@ void AMainCharacter::UpdateRabbitUbility()
 		);
 		if (bHit)
 		{
+			UE_LOG(LogTemp, Warning, TEXT("Hit Actor: %s"), *Hit.GetActor()->GetName());
 			// 着地点を障害物の手前に設定
 			End_Jump = Hit.Location - ForwardVector * CheckRadius;
 		}
@@ -394,7 +493,7 @@ void AMainCharacter::UpdateRabbitUbility()
 	Alpha = 0.f;
 }
 
-FVector AMainCharacter::SetForwardVector(EPlayerDirection _playerdirection)
+FVector AMainCharacter::GetForwardVector(EPlayerDirection _playerdirection)
 {
 	FVector vector(0, 0, 0);
 	switch (_playerdirection)
@@ -446,6 +545,70 @@ void AMainCharacter::UpdateJump(float Deltatime)
 		}
 	}
 }
+
+// ダッシュ使用時の処理
+void AMainCharacter::UpdateUseDash()
+{
+	if (!bDashing)
+	{
+		// データを取得する
+		auto Data = CharacterFormDataComponent->GetData(TransformState);
+		UE_LOG(LogTemp, Warning, TEXT("DashMaxSpeed"));
+		MovementComponent->MaxFlySpeed = Data.DashMaxSpeed;
+		MaxSpeed = Data.DashMaxSpeed;
+	}
+	
+
+	// イノシシなのか判定
+	if (TransformState == ETransformState::Boar){ bDashing = true; }
+}
+
+// ダッシュ中の処理
+void AMainCharacter::UpdateDash(float Deltatime)
+{
+	if (bDashing)
+	{
+		// 動いていなかったらダッシュを解除する
+		if (CurrentPlayerState != EPlayerState::Move) { bDashing = false; }
+		CurrentSpeed = GetVelocity().Size2D();
+
+		// ダッシュゲージが100%になるまで計算
+		if (DashGauge <= 100.f)
+		{
+			DashGauge = (CurrentSpeed / MaxSpeed) * 100.f;
+			//UE_LOG(LogTemp, Warning, TEXT("Floatの値: %f"), DashGauge);
+			
+		}
+		// 50%を超えたら突撃中にする
+		if (DashGauge > ChargeThreshold)
+		{
+			bChargeing = true;
+			UpdateCharge();
+			UE_LOG(LogTemp, Warning, TEXT("ChargeThreshold"));
+		}
+	}
+	else
+	{
+		// ダッシュ状態ではないとき初期化
+		CurrentSpeed = 0.f;
+		MaxSpeed = 0.f;
+		DashGauge = 0.f;
+		bChargeing = false;
+		// データを取得する
+		auto Data = CharacterFormDataComponent->GetData(TransformState);
+		MovementComponent->MaxFlySpeed = Data.WalkMaxSpeed;
+	}
+}
+
+// 突撃中の処理
+void AMainCharacter::UpdateCharge()
+{
+	if (bChargeing)
+	{
+		UseAbilityCheck();
+	}
+}
+
 
 FVector AMainCharacter::Jump(FVector p1, FVector p2, FVector p3, float t)
 {

@@ -34,6 +34,12 @@ void ARoomManager::BeginPlay()
         return;
     }
 
+	EventSubsystem->Register<ARoomManager>(
+		EGameEvent::RoomReset,
+		this,
+		&ARoomManager::OnRoomReset
+	);
+
     Player = Cast<AMainCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
 
     if (!Player)
@@ -59,6 +65,15 @@ void ARoomManager::BeginPlay()
     {
         SetCurrentRoom(InitialRoom);
     }
+}
+
+// ルームリセット時に呼び出される関数
+void ARoomManager::OnRoomReset(const FString& Message)
+{
+	if (CurrentRoom)
+	{
+		CurrentRoom->ResetRoom();
+	}
 }
 
 // プレイヤーを取得する

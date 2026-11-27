@@ -28,6 +28,9 @@ public:
 
 	// リスポーンポイントを設定する
 	void SetRespawnPoint(const FVector& Location);
+
+	// ルームをリセットされた時呼び出される関数
+	void ResetRoom();
 protected:
 	// ゲーム終了時処理
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -35,6 +38,7 @@ protected:
 	// プレイヤーがリスポーンしたときに呼ばれる関数
 	void OnPlayerRespawn(const FString& Message);
 
+	
 public:
 	// タイルマップのバウンディングを取得する
 	FBox GetTilemapBounds() const;
@@ -53,9 +57,12 @@ protected:
 	TObjectPtr<APaperTileMapActor> TilemapActor;
 
 	// デフォルトのリスポーンポイント
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Room")
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Reset")
 	TObjectPtr<AActor> RespawnPointDummy;
 
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Reset")
+	TMap<TObjectPtr<UChildActorComponent>, FVector> ChildInitPositions;
 	// プレイヤーのリスポーンポイント
 	FVector PlayerRespawnPoint;
 

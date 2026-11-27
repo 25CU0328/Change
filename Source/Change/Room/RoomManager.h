@@ -27,10 +27,13 @@ public:
 
 	// 現在ルームを設定する
 	void SetCurrentRoom(ARoomBase* NewRoom);
+
 protected:
 	// ゲーム開始時の処理
 	virtual void BeginPlay() override;
 
+	// ルームリセット時に呼び出される関数
+	void OnRoomReset(const FString& Message);
 public:
 	// 最初のルームを設定するための変数
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Room")
