@@ -52,10 +52,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Room")
 	TObjectPtr<UPaperTileMapComponent> Tilemap;
 
-	// タイルマップを持つアクター
-	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Room")
-	TObjectPtr<APaperTileMapActor> TilemapActor;
-
 	// デフォルトのリスポーンポイント
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Reset")
 	TObjectPtr<AActor> RespawnPointDummy;

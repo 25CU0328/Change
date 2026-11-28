@@ -21,28 +21,23 @@ void ARoomBase::BeginPlay()
 	Super::BeginPlay();
 
 	TArray<UChildActorComponent*> AttachedChildActors;
-	GetComponents<UChildActorComponent>(
-		AttachedChildActors
-	);
+	GetComponents<UChildActorComponent>(AttachedChildActors);
 
 	for (UChildActorComponent* ChildComponent : AttachedChildActors)
 	{
-		if (ChildComponent)
-		{
-			AActor* ChildActor = ChildComponent->GetChildActor();
+		AActor* ChildActor = ChildComponent->GetChildActor();
 
-			if (ChildActor)
-			{
-				FVector Location = ChildActor->GetActorLocation();
-				ChildInitPositions.Add(
-					ChildComponent,
-					ChildComponent->GetChildActor()->GetActorLocation()
-				);
-			}
+		if (ChildActor)
+		{
+			FVector Location = ChildActor->GetActorLocation();
+			ChildInitPositions.Add(
+				ChildComponent,
+				ChildComponent->GetChildActor()->GetActorLocation()
+			);
 		}
 	}
 
-	Tilemap = TilemapActor->GetRenderComponent();
+	Tilemap = GetComponentByClass<UPaperTileMapComponent>();
 
 	bIsInitialized = true;
 

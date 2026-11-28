@@ -9,6 +9,7 @@
 
 class UPaperSpriteComponent;
 class UPaperSprite;
+class UBoxComponent;
 
 UCLASS()
 class CHANGE_API AMechanismBase : public AActor
@@ -23,13 +24,16 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
 
 protected:
 	UPROPERTY()
 	TObjectPtr<UPaperSpriteComponent> SpriteComponent;
+
+	// コリジョン用のボックスコンポーネント
+	UPROPERTY()
+	TObjectPtr<UBoxComponent> BoxComponent;
+
+	TObjectPtr<USceneComponent> rootComponent;
 
 	// 元状態の画像
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sprite", meta = (AllowPrivateAccess = "true"))
@@ -64,8 +68,13 @@ protected:
 
 protected:
 	// 起動イベントを受け取ったら
-	void OnActivateEvent(const FString& Message);
+	virtual void OnActivateEvent(const FString& Message);
 
 	// 解除イベントを受け取ったら
-	void OnDeactiveEvent(const FString& Message);
+	virtual void OnDeactiveEvent(const FString& Message);
+
+	// ギミックを起動する
+	virtual void ActiveMechanism();
+	// ギミックを解除する
+	virtual void DeactiveMechanism();
 };
