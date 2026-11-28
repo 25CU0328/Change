@@ -30,6 +30,9 @@ public:
 
 
 private:
+	// 別のレベルに遷移する時に呼び出されるメソッド
+	void OnTransitionLevel(const FString& EventMessage);
+
 	// ゲーム開始に関するイベントが送られたら呼び出されるメソッド
 	void OnGameStart(const FString& EventMessage);
 

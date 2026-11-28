@@ -54,6 +54,12 @@ void UGameFlowSubsystem::Initialize(FSubsystemCollectionBase& Collection)
         &UGameFlowSubsystem::OnToMainMenu
     );
 
+    EventSubsystem->Register<UGameFlowSubsystem>(
+        EGameEvent::TransitionLevel,
+        this,
+        &UGameFlowSubsystem::OnTransitionLevel
+    );
+
     UE_LOG(LogTemp, Log, TEXT("GameFlowSubsystem Initialize"));
 }
 
@@ -63,6 +69,21 @@ void UGameFlowSubsystem::Deinitialize()
     Super::Deinitialize();
 
     UE_LOG(LogTemp, Log, TEXT("GameFlowSubsystem Deinitialize"));
+}
+
+// 別のレベルに遷移する時に呼び出されるメソッド
+void UGameFlowSubsystem::OnTransitionLevel(const FString& EventMessage)
+{
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Can't Get World!"));
+		return;
+	}
+
+    UE_LOG(LogTemp, Error, TEXT("Message: %s"), *EventMessage);
+	FName LevelName(*EventMessage);
+	UGameplayStatics::OpenLevel(World, LevelName);
 }
 
 // ゲーム開始に関するイベントが送られたら
