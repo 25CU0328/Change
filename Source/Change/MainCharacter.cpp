@@ -13,6 +13,8 @@
 #include "PaperZDAnimationComponent.h"
 #include "PaperZDAnimInstance.h"
 
+#include "Change/Data/AnimalFormData.h"
+
 // UCharacterMovementComponent を使うためのヘッダー
 #include "GameFramework/CharacterMovementComponent.h" 
 #include "PaperSpriteComponent.h"
@@ -202,7 +204,6 @@ void AMainCharacter::UpdateMovement(const FVector2f& MovementVector)
 // プレイヤーの向きを更新する
 void AMainCharacter::UpdateDirection(const FVector2f& MovementVector)
 {
-	UE_LOG(LogTemp, Warning, TEXT("UpdateDirection!"));
 	if (StopMove)
 	{
 		return;
@@ -274,25 +275,37 @@ void AMainCharacter::UpdatePlayerState()
 // 変身データを更新する
 void AMainCharacter::ApplyCharacterFormData()
 {
-	// データを取得する
-	auto Data = CharacterFormDataComponent->GetData(TransformState);
-	// アニメーションインスタンスがヌルの場合、処理しない
-	if (!Data.AnimationInstance)
+	// データ名を取得する
+	const UEnum* EnumPtr = StaticEnum<ETransformState>();
+
+	FName TargetRowName = FName(
+		EnumPtr->GetNameStringByValue(
+			static_cast<int64>(TransformState)
+		)
+	);
+	if(TargetRowName.IsNone())
 	{
-		UE_LOG(
-			LogTemp,
-			Error,
-			TEXT("Animation Instance Is Null!!")
-		);
+		UE_LOG(LogTemp, Error, TEXT("Invalid TransformState!"));
+		return;
+	}
+
+	FAnimalFormData* Data = AnimalFormDataTable->FindRow<FAnimalFormData>(
+		TargetRowName,
+		TEXT("GetAnimalFormData"),
+		false
+	);
+	if (!Data)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to find animal form data for state: %s"), *TargetRowName.ToString());
 		return;
 	}
 
 	// アニメーションインスタンスを設定する
-	AnimationComponent->SetAnimInstanceClass(Data.AnimationInstance);
+	AnimationComponent->SetAnimInstanceClass(Data->AnimationInstance);
 
-	MovementComponent->MaxWalkSpeed = Data.WalkMaxSpeed;
-	MovementComponent->BrakingDecelerationWalking = Data.Deceleration;
-	MovementComponent->MaxAcceleration = Data.Acceleration;
+	MovementComponent->MaxWalkSpeed = Data->WalkMaxSpeed;
+	MovementComponent->BrakingDecelerationWalking = Data->Deceleration;
+	MovementComponent->MaxAcceleration = Data->Acceleration;
 }
 
 // 猪に変身したときの処理

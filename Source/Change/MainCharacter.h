@@ -84,19 +84,10 @@ public:
 	// アニメションをコントロールするコンポネント
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation")
 	TObjectPtr<UPaperZDAnimationComponent> AnimationComponent;
-
-	// 人類のアニメションインスタンス
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
-	TSubclassOf<UPaperZDAnimInstance> AS_Human;
-
-	// 猪のアニメションインスタンス
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
-	TSubclassOf<UPaperZDAnimInstance> AS_Boar;
-
-	// 兎のアニメションインスタンス
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
-	TSubclassOf<UPaperZDAnimInstance> AS_Ribbit;
-
+	
+	// 変身データを管理するデータテーブル
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Data")
+	TObjectPtr<UDataTable> AnimalFormDataTable;
 
 	// プレイヤーの状態
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
@@ -114,6 +105,7 @@ private:
 
 	// 変身データを管理するコンポネント
 	TObjectPtr<UCharacterFormDataComponent> CharacterFormDataComponent;
+
 
 	UPROPERTY()
 	AGimmickBase* m_pLiftObject;					//持ち上げているオブジェクト情報
